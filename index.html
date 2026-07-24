@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar de Capacidad — Inteligencia de la red eléctrica española</title>
+<meta name="description" content="Informe mensual gratuito: dónde la red eléctrica española tiene capacidad de acceso disponible (CEP/CAD), nodo a nodo, y qué nodos liberan o pierden capacidad cada mes. Datos CNMC, curados.">
+
+<!-- Favicon: isotipo NudoRed (N de nodos) sobre badge oscuro, SVG inline -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%230D131C'/%3E%3Cpath d='M11 30 V10 L29 30 V10' fill='none' stroke='%23C7D0D6' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='11' cy='30' r='2.8' fill='%23E8ECEA'/%3E%3Ccircle cx='11' cy='10' r='2.8' fill='%23E8ECEA'/%3E%3Ccircle cx='29' cy='30' r='2.8' fill='%23E8ECEA'/%3E%3Ccircle cx='29' cy='10' r='3.8' fill='%232FD08A'/%3E%3C/svg%3E">
+
+<!-- Open Graph: así el enlace en LinkedIn muestra tarjeta -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Radar de Capacidad — la red eléctrica española, cada mes">
+<meta property="og:description" content="Informe mensual gratuito con la capacidad de acceso disponible nodo a nodo (CEP/CAD) y qué nodos se mueven mes a mes. Datos oficiales CNMC, curados.">
+<meta property="og:site_name" content="NudoRed">
+<meta property="og:locale" content="es_ES">
+<meta property="og:url" content="https://vsimobaeza.github.io/NudoRedLanding/">
+<meta property="og:image" content="https://vsimobaeza.github.io/NudoRedLanding/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="NudoRed · Radar de Capacidad — dónde la red española tiene sitio, cada mes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="robots" content="index,follow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#0D131C; --paper:#F8F9F8; --panel:#FFFFFF;
+    --ink-soft:#4E5A66; --hair:#E3E6E3;
+    --green:#0B9463; --green-chip:#077A50; --green-text:#076B47; --green-dark:#2FD08A;
+    --amber:#C07C08; --amber-text:#8F5D03; --red:#C63C2C; --red-text:#A8291B; --red-dark:#FF6F5C;
+    --band-soft:#9AA6B0; --band-hair:rgba(255,255,255,.16);
+    --sans:"Archivo","Segoe UI",-apple-system,Arial,sans-serif;
+    --mono:"Spline Sans Mono","Cascadia Code",Consolas,ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .doc{max-width:760px;margin:0 auto;padding:0 24px;}
+  .mono{font-family:var(--mono);}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  h1,h2,h3{text-wrap:balance;}
+  a{color:var(--green-text);}
+
+  /* ============ banda superior (masthead + hero) ============ */
+  .band{background:var(--ink);color:#F4F6F5;}
+  .band .doc{padding-top:26px;padding-bottom:96px;}
+  .mast{display:flex;justify-content:space-between;align-items:center;gap:16px;
+    padding-bottom:16px;border-bottom:1px solid var(--band-hair);}
+  .brand{display:inline-flex;align-items:center;gap:11px;}
+  .logo-mark{width:34px;height:34px;display:block;flex:none;}
+  .logo-mark .edge{stroke:#AEB9C2;stroke-width:2.6;}
+  .logo-mark .node{fill:#E8ECEA;}
+  .logo-mark .node.on{fill:var(--green-dark);}
+  .wordmark{font-weight:800;font-stretch:122%;font-size:22px;letter-spacing:-.01em;line-height:1;}
+  .wordmark b{color:var(--green-dark);font-weight:800;}
+  .mast .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--band-soft);text-align:right;}
+
+  .hero{padding-top:36px;}
+  .hero h1{
+    font-size:clamp(30px,5.4vw,44px);line-height:1.05;font-weight:800;font-stretch:115%;
+    letter-spacing:-.02em;margin:0;color:#FFFFFF;
+  }
+  .hero h1 em{font-style:normal;color:var(--green-dark);}
+  .hero .lede{font-size:16.5px;color:#C9D2D8;max-width:60ch;margin:18px 0 0;line-height:1.6;}
+  .hero .lede b{font-weight:640;color:#FFFFFF;}
+  .band-facts{
+    display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:26px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--band-soft);
+  }
+  .band-facts .k{display:inline-flex;align-items:baseline;gap:8px;}
+  .band-facts b{color:#F4F6F5;font-weight:600;}
+  .band-facts b.amber{color:#E7A93B;}
+
+  /* ============ tarjeta de suscripción (solapa la banda, guiño a .gauges) ============ */
+  .signup{background:var(--panel);border:1px solid var(--hair);
+    margin:-64px 0 8px;position:relative;padding:26px 26px 24px;
+    box-shadow:0 18px 40px -28px rgba(13,19,28,.5);}
+  .signup .rule{height:2px;background:var(--amber);width:40px;margin:0 0 14px;}
+  .signup h2{font-size:20px;font-weight:770;font-stretch:110%;letter-spacing:-.015em;margin:0 0 6px;}
+  .signup p.sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 18px;max-width:56ch;text-wrap:pretty;}
+  .form-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .form-row input[type=email]{
+    flex:1 1 240px;min-width:0;font-family:var(--sans);font-size:15px;color:var(--ink);
+    padding:13px 14px;border:1px solid #C9D0CB;border-radius:2px;background:#fff;
+  }
+  .form-row input[type=email]:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(192,124,8,.14);}
+  .form-row button{
+    font-family:var(--sans);font-weight:680;font-size:14.5px;letter-spacing:.01em;color:#fff;
+    background:var(--ink);border:1px solid var(--ink);border-radius:2px;padding:13px 22px;cursor:pointer;
+    transition:background .15s ease;
+  }
+  .form-row button:hover{background:#1b2836;}
+  .form-row button:disabled{opacity:.55;cursor:progress;}
+  .fineprint{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--ink-soft);
+    margin:13px 0 0;display:flex;flex-wrap:wrap;gap:5px 16px;}
+  .fineprint .k{display:inline-flex;align-items:center;gap:6px;}
+  .fineprint i{width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;}
+  .form-msg{margin:14px 0 0;font-size:13.5px;line-height:1.5;display:none;}
+  .form-msg.ok{display:block;color:var(--green-text);}
+  .form-msg.err{display:block;color:var(--red-text);}
+  .signup.done .form-row,.signup.done .fineprint{display:none;}
+
+  /* ============ qué recibes ============ */
+  .section{padding:30px 0 6px;}
+  .section-h{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-bottom:6px;}
+  .section-h h2{font-size:19px;font-weight:760;font-stretch:110%;letter-spacing:-.015em;margin:0;}
+  .section-h .s-note{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;}
+  .section-rule{height:2px;background:var(--ink);width:44px;margin:0 0 16px;}
+
+  .whats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:4px;}
+  .wcard{border:1px solid var(--hair);background:var(--panel);padding:16px 16px 15px;}
+  .wcard .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--amber-text);margin:0 0 8px;}
+  .wcard h3{font-size:15px;font-weight:730;letter-spacing:-.01em;margin:0 0 5px;}
+  .wcard p{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.5;text-wrap:pretty;}
+
+  /* ============ credibilidad / cierre ============ */
+  .trust{margin-top:26px;border-top:1px solid var(--hair);padding-top:18px;
+    font-size:13px;color:var(--ink-soft);line-height:1.6;max-width:64ch;}
+  .trust b{color:var(--ink);font-weight:640;}
+
+  footer{margin-top:34px;border-top:1px solid var(--hair);padding:18px 0 40px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;}
+  footer a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--hair);}
+  footer a:hover{color:var(--ink);}
+
+  @media (max-width:640px){
+    .whats{grid-template-columns:1fr;}
+    .band .doc{padding-bottom:88px;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ BANDA: masthead + hero ============ -->
+  <header class="band">
+    <div class="doc">
+      <div class="mast">
+        <div class="brand">
+          <svg class="logo-mark" viewBox="0 0 40 40" fill="none" role="img" aria-label="NudoRed">
+            <path class="edge" d="M9 31 V9 L31 31 V9" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle class="node" cx="9" cy="31" r="3"/>
+            <circle class="node" cx="9" cy="9" r="3"/>
+            <circle class="node" cx="31" cy="31" r="3"/>
+            <circle class="node on" cx="31" cy="9" r="4.4"/>
+          </svg>
+          <span class="wordmark">Nudo<b>Red</b></span>
+        </div>
+        <div class="kicker">Spanish Grid<br>Capacity Intelligence</div>
+      </div>
+
+      <div class="hero">
+        <h1>Dónde la red española tiene sitio, <em>cada mes</em>.</h1>
+        <p class="lede">Un informe mensual con la <b>capacidad de acceso disponible nodo a nodo</b>
+          (CEP/CAD) de la red eléctrica española — y qué nodos <b>liberan o pierden</b> capacidad
+          respecto al mes anterior. Datos oficiales de CNMC, curados y legibles.</p>
+
+        <div class="band-facts">
+          <span class="k"><b>1</b> email al mes</span>
+          <span class="k"><b class="amber">CEP / CAD</b> nodo a nodo</span>
+          <span class="k"><b>Δ</b> qué cambió vs. mes anterior</span>
+          <span class="k">Fuente <b>CNMC</b></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="doc">
+
+    <!-- ============ tarjeta de suscripción ============ -->
+    <section class="signup" id="signup">
+      <div class="rule"></div>
+      <h2>Recibe el Radar cada mes</h2>
+      <p class="sub">Gratis. Se envía cuando CNMC publica el nuevo periodo (~día 9–10 de cada mes).
+        Sin spam; un solo correo mensual.</p>
+
+      <!-- Formspree configurado (form mqerydva). Endpoint de captura; ver captacion/README.md -->
+      <form id="radar-form" action="https://formspree.io/f/mqerydva" method="POST">
+        <div class="form-row">
+          <label for="email" class="mono" style="position:absolute;left:-9999px;">Email</label>
+          <input id="email" type="email" name="email" required autocomplete="email"
+                 placeholder="tu@empresa.com" inputmode="email">
+          <button type="submit" id="submit-btn">Suscribirme</button>
+        </div>
+        <!-- honeypot anti-bots (Formspree lo ignora si viene relleno) -->
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
+               style="position:absolute;left:-9999px;" aria-hidden="true">
+        <input type="hidden" name="_subject" value="Nueva alta — Radar de Capacidad">
+        <div class="fineprint">
+          <span class="k"><i></i> Sin spam</span>
+          <span class="k"><i></i> Baja cuando quieras</span>
+          <span class="k"><i></i> Tu email no se comparte</span>
+        </div>
+      </form>
+      <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- ============ qué recibes ============ -->
+    <section class="section">
+      <div class="section-h">
+        <h2>Qué llega a tu bandeja</h2>
+        <span class="s-note">Cada edición</span>
+      </div>
+      <div class="section-rule"></div>
+
+      <div class="whats">
+        <div class="wcard">
+          <p class="tag">Capacidad</p>
+          <h3>MW disponibles reales</h3>
+          <p>El «MW disponible» correcto para conectar carga o generación, leído del BOE (CEP/CAD),
+             no la cifra bruta que confunde.</p>
+        </div>
+        <div class="wcard">
+          <p class="tag">Movimiento</p>
+          <h3>Qué cambió este mes</h3>
+          <p>Los nodos que <b>liberan</b> o <b>pierden</b> capacidad frente al mes anterior — el
+             histórico que CNMC no guarda.</p>
+        </div>
+        <div class="wcard">
+          <p class="tag">Contexto</p>
+          <h3>Dónde mirar</h3>
+          <p>Regiones saturadas vs. con hueco, lectura del mes y los nodos con oportunidad.
+             Para decidir dónde buscar suelo.</p>
+        </div>
+      </div>
+
+      <p class="trust">
+        Construido sobre los datos oficiales de <b>capacidad de acceso de la CNMC</b>, normalizados y
+        curados mes a mes. Pensado para <b>brokers de suelo, desarrolladores y equipos de real estate</b>
+        que necesitan saber dónde hay red antes de mover una parcela.
+      </p>
+    </section>
+
+    <footer>
+      <span>NudoRed · Radar de Capacidad · Spanish Grid Capacity Intelligence</span>
+      <span>Fuente: CNMC · <span id="year"></span></span>
+    </footer>
+  </main>
+
+<script>
+  // Envío AJAX a Formspree con estado inline (mejora progresiva:
+  // sin JS, el form hace POST normal y Formspree muestra su propia página de gracias).
+  (function(){
+    var form = document.getElementById('radar-form');
+    var msg  = document.getElementById('form-msg');
+    var btn  = document.getElementById('submit-btn');
+    var box  = document.getElementById('signup');
+    if(!form) return;
+
+    form.addEventListener('submit', function(e){
+      // Si aún no se ha configurado el form id, no interceptamos: dejamos que falle visiblemente.
+      if(form.action.indexOf('TU_FORM_ID') !== -1){
+        e.preventDefault();
+        msg.className = 'form-msg err';
+        msg.textContent = 'Formulario sin configurar todavía (falta el id de Formspree). Ver captacion/README.md.';
+        return;
+      }
+      e.preventDefault();
+      btn.disabled = true;
+      msg.className = 'form-msg';
+      msg.textContent = '';
+
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      }).then(function(r){
+        if(r.ok){
+          box.classList.add('done');
+          msg.className = 'form-msg ok';
+          msg.textContent = '¡Hecho! Revisa tu correo para confirmar la suscripción. El próximo Radar te llegará cuando salga el periodo del mes.';
+        }else{
+          return r.json().then(function(d){
+            throw new Error((d.errors && d.errors[0] && d.errors[0].message) || 'No se pudo enviar.');
+          });
+        }
+      }).catch(function(err){
+        btn.disabled = false;
+        msg.className = 'form-msg err';
+        msg.textContent = 'Ups: ' + err.message + ' Inténtalo de nuevo o escríbeme por LinkedIn.';
+      });
+    });
+
+    // Año dinámico en el pie (sin tocar el resto del DOM, para no perder el listener).
+    var yr = document.getElementById('year');
+    if(yr) yr.textContent = new Date().getFullYear();
+  })();
+</script>
+</body>
+</html>
