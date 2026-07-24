@@ -51,7 +51,15 @@
   a{color:var(--green-text);}
 
   /* ============ banda superior (masthead + hero) ============ */
-  .band{background:var(--ink);color:#F4F6F5;}
+  .band{background:var(--ink);color:#F4F6F5;position:relative;overflow:hidden;isolation:isolate;}
+  /* lienzo 3D de la red de nodos: detrás de todo el contenido, nunca captura el puntero */
+  .band-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;}
+  /* velo izquierda→derecha: mantiene el titular y el lede legibles sobre la red */
+  .band-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:
+      linear-gradient(90deg, rgba(13,19,28,.94) 0%, rgba(13,19,28,.86) 26%, rgba(13,19,28,.55) 52%, rgba(13,19,28,.12) 78%, rgba(13,19,28,0) 100%),
+      linear-gradient(180deg, rgba(13,19,28,.5) 0%, rgba(13,19,28,0) 22%, rgba(13,19,28,0) 72%, rgba(13,19,28,.55) 100%);}
+  .band .doc{position:relative;z-index:2;}
   .band .doc{padding-top:26px;padding-bottom:96px;}
   .mast{display:flex;justify-content:space-between;align-items:center;gap:16px;
     padding-bottom:16px;border-bottom:1px solid var(--band-hair);}
@@ -143,6 +151,8 @@
 
   <!-- ============ BANDA: masthead + hero ============ -->
   <header class="band">
+    <canvas class="band-canvas" id="grid-canvas" aria-hidden="true"></canvas>
+    <div class="band-scrim" aria-hidden="true"></div>
     <div class="doc">
       <div class="mast">
         <div class="brand">
@@ -294,6 +304,264 @@
     var yr = document.getElementById('year');
     if(yr) yr.textContent = new Date().getFullYear();
   })();
+</script>
+
+<!-- ============ Fondo 3D: red viva de nodos de capacidad (Three.js vía importmap) ============ -->
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+/*
+  Red eléctrica viva: nodos (subestaciones) unidos por líneas. Nodo verde = con hueco
+  (energizado, respira); nodos apagados = saturados. Pulsos ocasionales = corriente.
+  Profundidad real con PerspectiveCamera + niebla en el color de fondo.
+  Sin postprocesado: el glow son sprites additive con una textura radial suave.
+  Todo envuelto en try/catch + detección de WebGL: si algo falla, la banda queda limpia.
+*/
+(async function(){
+  "use strict";
+  const canvas = document.getElementById('grid-canvas');
+  const band   = document.querySelector('.band');
+  if(!canvas || !band) return;
+
+  // --- Detección de WebGL: si no hay, no tocamos nada ---
+  function hasWebGL(){
+    try{
+      const c = document.createElement('canvas');
+      return !!(window.WebGLRenderingContext &&
+        (c.getContext('webgl') || c.getContext('experimental-webgl')));
+    }catch(e){ return false; }
+  }
+  if(!hasWebGL()) return;
+
+  let THREE;
+  try{
+    THREE = await import('three');
+  }catch(e){
+    // El CDN no cargó: dejamos la banda oscura tal cual, sin lienzo roto.
+    return;
+  }
+
+  try{
+    const BG = 0x0D131C;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isNarrow = () => Math.min(window.innerWidth, band.clientWidth) <= 640;
+
+    // --- Renderer ---
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:'low-power' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(BG, 1);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(BG, 0.05);
+
+    let W = band.clientWidth  || window.innerWidth;
+    let H = band.clientHeight || 360;
+    const camera = new THREE.PerspectiveCamera(52, W/H, 0.1, 100);
+    camera.position.set(0, 0, isNarrow() ? 19 : 17);
+
+    // --- Textura radial suave (glow) compartida ---
+    function makeGlowTexture(){
+      const s = 128, cv = document.createElement('canvas'); cv.width = cv.height = s;
+      const ctx = cv.getContext('2d');
+      const g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+      g.addColorStop(0.0, 'rgba(255,255,255,1)');
+      g.addColorStop(0.18,'rgba(255,255,255,0.85)');
+      g.addColorStop(0.45,'rgba(255,255,255,0.28)');
+      g.addColorStop(1.0, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(0,0,s,s);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+    const glow = makeGlowTexture();
+
+    // --- Grupo que gira/deriva ---
+    const group = new THREE.Group();
+    scene.add(group);
+
+    // --- Generación de nodos en una losa 3D (ancha, con profundidad real en z) ---
+    const NODE_COUNT = isNarrow() ? 36 : 62;
+    const SPAN_X = isNarrow() ? 15 : 22;                  // en móvil, losa más estrecha (cabe en pantalla)
+    const SPAN_Y = isNarrow() ? 13 : 9.5, SPAN_Z = 12;   // losa ancha y con fondo (profundidad real en z)
+    const nodes = [];  // {pos, kind:'dim'|'green'|'amber', phase, base}
+    for(let i=0;i<NODE_COUNT;i++){
+      // sesgo: un poco más de densidad hacia la derecha (el texto vive a la izquierda)
+      let x = (Math.random()*2-1);
+      x = Math.sign(x)*Math.pow(Math.abs(x),0.85);
+      const pos = new THREE.Vector3(
+        x * SPAN_X * 0.5 + (isNarrow() ? 0.5 : 2.0),
+        (Math.random()*2-1) * SPAN_Y * 0.5,
+        (Math.random()*2-1) * SPAN_Z * 0.5 - 2.0
+      );
+      nodes.push({ pos, kind:'dim', phase:Math.random()*Math.PI*2 });
+    }
+    // ~28% energizados verdes, 1-2 ámbar (vigilancia), el resto apagados
+    const idx = nodes.map((_,i)=>i);
+    for(let k=idx.length-1;k>0;k--){ const j=(Math.random()*(k+1))|0; [idx[k],idx[j]]=[idx[j],idx[k]]; }
+    const greenN = Math.round(NODE_COUNT * 0.28);
+    const amberN = isNarrow() ? 1 : 2;
+    for(let i=0;i<greenN;i++) nodes[idx[i]].kind = 'green';
+    for(let i=greenN;i<greenN+amberN;i++) nodes[idx[i]].kind = 'amber';
+
+    // --- Aristas: unir solo nodos cercanos (grafo de red), con tope por nodo ---
+    const edges = [];
+    const THRESH = 6.4, MAX_DEG = 4;
+    const deg = new Array(NODE_COUNT).fill(0);
+    const cand = [];
+    for(let i=0;i<NODE_COUNT;i++)
+      for(let j=i+1;j<NODE_COUNT;j++){
+        const d = nodes[i].pos.distanceTo(nodes[j].pos);
+        if(d < THRESH) cand.push({i,j,d});
+      }
+    cand.sort((a,b)=>a.d-b.d);
+    for(const c of cand){
+      if(deg[c.i]>=MAX_DEG || deg[c.j]>=MAX_DEG) continue;
+      edges.push([c.i,c.j]); deg[c.i]++; deg[c.j]++;
+    }
+    // asegurar que ningún nodo quede totalmente suelto (une al más cercano)
+    for(let i=0;i<NODE_COUNT;i++){
+      if(deg[i]>0) continue;
+      let best=-1, bd=1e9;
+      for(let j=0;j<NODE_COUNT;j++){ if(j===i) continue;
+        const d=nodes[i].pos.distanceTo(nodes[j].pos); if(d<bd){bd=d;best=j;} }
+      if(best>=0){ edges.push([i,best]); deg[i]++; deg[best]++; }
+    }
+
+    // --- Líneas de la red (tenues, blancas) ---
+    const lineGeom = new THREE.BufferGeometry();
+    const lp = new Float32Array(edges.length*6);
+    for(let e=0;e<edges.length;e++){
+      const a=nodes[edges[e][0]].pos, b=nodes[edges[e][1]].pos;
+      lp.set([a.x,a.y,a.z, b.x,b.y,b.z], e*6);
+    }
+    lineGeom.setAttribute('position', new THREE.BufferAttribute(lp,3));
+    const lineMat = new THREE.LineBasicMaterial({ color:0xC9D2D8, transparent:true, opacity:0.13, depthWrite:false });
+    group.add(new THREE.LineSegments(lineGeom, lineMat));
+
+    // --- Nodos apagados (Points, baratos) ---
+    const dimNodes = nodes.filter(n=>n.kind==='dim');
+    const dp = new Float32Array(dimNodes.length*3);
+    dimNodes.forEach((n,i)=>{ dp.set([n.pos.x,n.pos.y,n.pos.z], i*3); });
+    const dimGeom = new THREE.BufferGeometry();
+    dimGeom.setAttribute('position', new THREE.BufferAttribute(dp,3));
+    const dimMat = new THREE.PointsMaterial({
+      size: 0.9, map: glow, color: 0x9AA6B0, transparent:true, opacity:0.55,
+      sizeAttenuation:true, depthWrite:false, blending:THREE.NormalBlending
+    });
+    group.add(new THREE.Points(dimGeom, dimMat));
+
+    // --- Nodos energizados (sprites additive individuales: cada uno respira) ---
+    const pulsers = [];
+    function addSprite(n, colorHex, baseScale, opacity){
+      const mat = new THREE.SpriteMaterial({
+        map: glow, color: colorHex, transparent:true, opacity,
+        blending: THREE.AdditiveBlending, depthWrite:false
+      });
+      const sp = new THREE.Sprite(mat);
+      sp.position.copy(n.pos);
+      sp.scale.setScalar(baseScale);
+      group.add(sp);
+      pulsers.push({ sp, mat, base:baseScale, phase:n.phase,
+        amp: colorHex===0x2FD08A ? 0.28 : 0.20, opBase:opacity });
+    }
+    nodes.forEach(n=>{
+      if(n.kind==='green') addSprite(n, 0x2FD08A, 1.6, 0.9);
+      else if(n.kind==='amber') addSprite(n, 0xE7A93B, 1.35, 0.8);
+    });
+
+    // --- Pulsos de energía viajando por aristas (corriente) ---
+    const PULSE_N = isNarrow() ? 3 : 6;
+    const pulses = [];
+    function newPulse(){
+      const e = edges[(Math.random()*edges.length)|0];
+      return { a:nodes[e[0]].pos, b:nodes[e[1]].pos, t:0,
+        speed: 0.28 + Math.random()*0.30, delay: Math.random()*4.5, active:false };
+    }
+    for(let i=0;i<PULSE_N;i++){
+      const p = newPulse();
+      const mat = new THREE.SpriteMaterial({ map:glow, color:0x8FF0C4, transparent:true,
+        opacity:0, blending:THREE.AdditiveBlending, depthWrite:false });
+      const sp = new THREE.Sprite(mat); sp.scale.setScalar(0.7); group.add(sp);
+      p.sp = sp; p.mat = mat; pulses.push(p);
+    }
+
+    // --- Puntero (parallax) ---
+    const pointer = { x:0, y:0, tx:0, ty:0, enabled: !reduceMotion && !isNarrow() && !matchMedia('(pointer:coarse)').matches };
+    if(pointer.enabled){
+      window.addEventListener('pointermove', (ev)=>{
+        pointer.tx = (ev.clientX / window.innerWidth  - 0.5) * 2;
+        pointer.ty = (ev.clientY / window.innerHeight - 0.5) * 2;
+      }, { passive:true });
+    }
+
+    // --- Resize ---
+    function resize(){
+      W = band.clientWidth || window.innerWidth;
+      H = band.clientHeight || 360;
+      renderer.setSize(W, H, false);
+      camera.aspect = W/H; camera.updateProjectionMatrix();
+    }
+    resize();
+    window.addEventListener('resize', resize, { passive:true });
+
+    // --- Bucle ---
+    const clock = new THREE.Clock();
+    let running = false, rafId = 0;
+
+    function frame(dt, t){
+      // deriva continua muy lenta + parallax suavizado hacia el puntero
+      group.rotation.y = t*0.035 + pointer.x*0.16;
+      group.rotation.x = Math.sin(t*0.08)*0.05 + pointer.y*0.10;
+      if(pointer.enabled){
+        pointer.x += (pointer.tx - pointer.x) * Math.min(dt*2.2, 1);
+        pointer.y += (pointer.ty - pointer.y) * Math.min(dt*2.2, 1);
+      }
+      // respiración de los nodos energizados
+      for(const p of pulsers){
+        const s = 1 + Math.sin(t*0.9 + p.phase) * p.amp;
+        p.sp.scale.setScalar(p.base * s);
+        p.mat.opacity = p.opBase * (0.72 + 0.28*(0.5+0.5*Math.sin(t*0.9+p.phase)));
+      }
+      // corriente por las aristas
+      for(const p of pulses){
+        if(!p.active){ p.delay -= dt; if(p.delay<=0){ p.active=true; p.t=0; } else { p.mat.opacity=0; continue; } }
+        p.t += dt * p.speed;
+        if(p.t>=1){ Object.assign(p, newPulse()); p.mat.opacity=0; continue; }
+        p.sp.position.lerpVectors(p.a, p.b, p.t);
+        p.mat.opacity = Math.sin(Math.PI*p.t) * 0.9;
+      }
+      renderer.render(scene, camera);
+    }
+
+    function loop(){
+      rafId = requestAnimationFrame(loop);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      frame(dt, clock.elapsedTime);
+    }
+    function start(){ if(running||reduceMotion) return; running=true; clock.start(); loop(); }
+    function stop(){ running=false; if(rafId) cancelAnimationFrame(rafId); rafId=0; }
+
+    // Movimiento reducido: un único fotograma estático, calmado.
+    if(reduceMotion){
+      // coloca respiración/pulsos en un estado neutro y renderiza una vez
+      for(const p of pulsers){ p.sp.scale.setScalar(p.base); }
+      for(const p of pulses){ p.mat.opacity = 0; }
+      renderer.render(scene, camera);
+    } else {
+      // Pausa cuando la pestaña se oculta o la banda sale de vista.
+      let visible = true, onscreen = true;
+      const sync = ()=>{ (visible && onscreen) ? start() : stop(); };
+      document.addEventListener('visibilitychange', ()=>{ visible = !document.hidden; sync(); });
+      if('IntersectionObserver' in window){
+        new IntersectionObserver((ents)=>{ onscreen = ents[0].isIntersecting; sync(); },
+          { threshold:0 }).observe(band);
+      }
+      sync();
+    }
+  }catch(e){
+    // Cualquier fallo del render: limpiamos el lienzo y dejamos la banda oscura intacta.
+    try{ canvas.style.display = 'none'; }catch(_){}
+  }
+})();
 </script>
 </body>
 </html>
