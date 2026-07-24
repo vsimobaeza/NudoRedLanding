@@ -166,6 +166,30 @@
   /* CTA de cierre: el MISMO formulario, en el punto de decisión tras leer */
   .signup.closing{margin:30px 0 4px;}
 
+  /* "Ver un ejemplo" + lightbox (enseña el informe sin regalar el detalle) */
+  .see-example{margin-top:16px;text-align:center;}
+  .see-example button{font-family:var(--mono);font-size:12px;letter-spacing:.03em;color:var(--green-text);
+    background:none;border:0;cursor:pointer;padding:6px 2px;border-bottom:1px solid transparent;transition:border-color .18s ease;}
+  .see-example button:hover{border-bottom-color:var(--green);}
+  .see-example .arw{display:inline-block;transition:transform .18s ease;}
+  .see-example button:hover .arw{transform:translateX(3px);}
+  dialog.example{border:0;padding:0;max-width:900px;width:calc(100% - 32px);max-height:90vh;color:var(--ink);
+    background:var(--panel);box-shadow:0 30px 80px -18px rgba(13,19,28,.6);overflow:hidden;}
+  dialog.example::backdrop{background:rgba(13,19,28,.62);backdrop-filter:blur(2px);}
+  .ex-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:15px 18px;border-bottom:1px solid var(--hair);}
+  .ex-head h3{margin:0;font-size:15px;font-weight:740;letter-spacing:-.01em;}
+  .ex-head .ex-sub{margin:2px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--ink-soft);text-transform:uppercase;}
+  .ex-close{font-family:var(--mono);font-size:14px;color:var(--ink-soft);background:none;border:1px solid var(--hair);
+    width:30px;height:30px;cursor:pointer;line-height:1;flex:none;}
+  .ex-close:hover{color:var(--ink);border-color:#C9D0CB;}
+  .ex-body{overflow:auto;max-height:calc(90vh - 132px);background:#EDF0ED;}
+  .ex-body img{display:block;width:100%;height:auto;border-bottom:1px solid var(--hair);}
+  .ex-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 18px;border-top:1px solid var(--hair);flex-wrap:wrap;}
+  .ex-foot .note{margin:0;font-size:12px;color:var(--ink-soft);}
+  .ex-foot a{font-family:var(--sans);font-weight:680;font-size:13px;color:#fff;background:var(--ink);
+    text-decoration:none;padding:9px 16px;white-space:nowrap;}
+  .ex-foot a:hover{background:#1b2836;}
+
   footer{margin-top:34px;border-top:1px solid var(--hair);padding:18px 0 40px;
     font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);
     display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;}
@@ -342,6 +366,12 @@
         </div>
       </div>
 
+      <div class="see-example">
+        <button type="button" class="js-see-example" aria-haspopup="dialog" aria-controls="example">
+          Ver un ejemplo del Radar de junio <span class="arw" aria-hidden="true">→</span>
+        </button>
+      </div>
+
       <div class="statline">
         <div class="statfig"><span class="statnum">272</span><span class="statden">/937</span></div>
         <p class="statcap">nudos de transporte de España admitían <b>nueva demanda</b> en junio de 2026
@@ -385,6 +415,27 @@
       <span>NudoRed · Radar de Capacidad · Spanish Grid Capacity Intelligence</span>
       <span>Fuente: CNMC · <span id="year"></span></span>
     </footer>
+
+    <!-- Lightbox: extracto del Radar (enseña sin regalar el detalle nodo a nodo) -->
+    <dialog class="example" id="example" aria-label="Ejemplo del Radar de Capacidad">
+      <div class="ex-head">
+        <div>
+          <h3>Un vistazo al Radar de junio</h3>
+          <p class="ex-sub">Extracto · el detalle nodo a nodo va en el email</p>
+        </div>
+        <button type="button" class="ex-close js-ex-close" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="ex-body">
+        <img src="teaser-portada.png" width="1736" height="874" loading="lazy"
+             alt="Portada del Radar de junio: «Aragón, agotada. Extremadura, abierta», con medidores de capacidad por comunidad">
+        <img src="teaser-mapas.png" width="1736" height="1141" loading="lazy"
+             alt="Mapas del Radar: nudos de la red de transporte de Aragón y Extremadura, coloreados por capacidad y dimensionados por MW disponibles">
+      </div>
+      <div class="ex-foot">
+        <p class="note">Es un extracto de junio. Cada mes recibes la edición completa por email.</p>
+        <a href="#signup" class="js-ex-subscribe">Recibirlo completo</a>
+      </div>
+    </dialog>
   </main>
 
 <script>
@@ -431,6 +482,18 @@
         });
       });
     });
+
+    // Lightbox "Ver un ejemplo del Radar" (dialog nativo; si no hay soporte, no hace nada raro).
+    var dlg = document.getElementById('example');
+    if(dlg && typeof dlg.showModal === 'function'){
+      Array.prototype.forEach.call(document.querySelectorAll('.js-see-example'), function(b){
+        b.addEventListener('click', function(){ dlg.showModal(); });
+      });
+      Array.prototype.forEach.call(dlg.querySelectorAll('.js-ex-close, .js-ex-subscribe'), function(b){
+        b.addEventListener('click', function(){ dlg.close(); });
+      });
+      dlg.addEventListener('click', function(e){ if(e.target === dlg) dlg.close(); }); // clic en el backdrop
+    }
 
     // Año dinámico en el pie (sin tocar el resto del DOM, para no perder el listener).
     var yr = document.getElementById('year');
