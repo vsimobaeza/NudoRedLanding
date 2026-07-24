@@ -149,9 +149,22 @@
   }
 
   /* ============ credibilidad / cierre ============ */
-  .trust{margin-top:26px;border-top:1px solid var(--hair);padding-top:18px;
-    font-size:13px;color:var(--ink-soft);line-height:1.6;text-wrap:pretty;}
+  .trust{margin-top:20px;font-size:13px;color:var(--ink-soft);line-height:1.6;text-wrap:pretty;}
   .trust b{color:var(--ink);font-weight:640;}
+
+  /* dato real (credibilidad, sin CTA) */
+  .statline{display:flex;align-items:center;gap:22px;margin-top:26px;border-top:1px solid var(--hair);
+    padding-top:20px;flex-wrap:wrap;}
+  .statfig{font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:.9;white-space:nowrap;}
+  .statnum{font-size:40px;font-weight:600;color:var(--green-text);letter-spacing:-.02em;}
+  .statden{font-size:22px;color:var(--ink-soft);}
+  .statcap{margin:0;flex:1 1 300px;font-size:13.5px;color:var(--ink-soft);line-height:1.5;text-wrap:pretty;}
+  .statcap b{color:var(--ink);font-weight:640;}
+  .statsrc{display:block;margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.09em;
+    text-transform:uppercase;color:#9AA69A;}
+
+  /* CTA de cierre: el MISMO formulario, en el punto de decisión tras leer */
+  .signup.closing{margin:30px 0 4px;}
 
   footer{margin-top:34px;border-top:1px solid var(--hair);padding:18px 0 40px;
     font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);
@@ -212,7 +225,7 @@
         Sin spam; un solo correo mensual.</p>
 
       <!-- Formspree configurado (form mqerydva). Endpoint de captura; ver captacion/README.md -->
-      <form id="radar-form" action="https://formspree.io/f/mqerydva" method="POST">
+      <form id="radar-form" class="js-radar-form" action="https://formspree.io/f/mqerydva" method="POST">
         <div class="form-row">
           <label for="email" class="mono" style="position:absolute;left:-9999px;">Email</label>
           <input id="email" type="email" name="email" required autocomplete="email"
@@ -329,11 +342,43 @@
         </div>
       </div>
 
+      <div class="statline">
+        <div class="statfig"><span class="statnum">272</span><span class="statden">/937</span></div>
+        <p class="statcap">nudos de transporte de España admitían <b>nueva demanda</b> en junio de 2026
+          — el <b>29%</b>. El resto, saturados. Eso es justo lo que el Radar te da, nodo a nodo, cada mes.
+          <span class="statsrc">Muestra real · Fuente: CNMC</span></p>
+      </div>
+
       <p class="trust">
         Construido sobre los datos oficiales de <b>capacidad de acceso de la CNMC</b>, normalizados y
         curados mes a mes. Pensado para <b>brokers de suelo, desarrolladores y equipos de real estate</b>
         que necesitan saber dónde hay red antes de mover una parcela.
       </p>
+
+      <!-- CTA de cierre: mismo formulario, en el punto natural de decisión -->
+      <section class="signup closing" id="signup-end" aria-label="Suscripción al Radar de Capacidad">
+        <div class="rule"></div>
+        <h2>Empieza por saber dónde hay red</h2>
+        <p class="sub">Un correo al mes con la capacidad disponible nodo a nodo. Gratis y sin spam;
+          te llega cuando CNMC publica el periodo.</p>
+        <form class="js-radar-form" action="https://formspree.io/f/mqerydva" method="POST">
+          <div class="form-row">
+            <label for="email-end" class="mono" style="position:absolute;left:-9999px;">Email</label>
+            <input id="email-end" type="email" name="email" required autocomplete="email"
+                   placeholder="tu@empresa.com" inputmode="email">
+            <button type="submit">Suscribirme</button>
+          </div>
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
+                 style="position:absolute;left:-9999px;" aria-hidden="true">
+          <input type="hidden" name="_subject" value="Nueva alta — Radar de Capacidad">
+          <div class="fineprint">
+            <span class="k"><i></i> Sin spam</span>
+            <span class="k"><i></i> Baja cuando quieras</span>
+            <span class="k"><i></i> Tu email no se comparte</span>
+          </div>
+        </form>
+        <p class="form-msg" role="status" aria-live="polite"></p>
+      </section>
     </section>
 
     <footer>
@@ -346,43 +391,44 @@
   // Envío AJAX a Formspree con estado inline (mejora progresiva:
   // sin JS, el form hace POST normal y Formspree muestra su propia página de gracias).
   (function(){
-    var form = document.getElementById('radar-form');
-    var msg  = document.getElementById('form-msg');
-    var btn  = document.getElementById('submit-btn');
-    var box  = document.getElementById('signup');
-    if(!form) return;
+    // Un mismo manejador para todos los formularios de suscripción (arriba y cierre).
+    var forms = document.querySelectorAll('form.js-radar-form');
+    Array.prototype.forEach.call(forms, function(form){
+      var box = form.closest('.signup');
+      var msg = box ? box.querySelector('.form-msg') : null;
+      var btn = form.querySelector('button[type="submit"]');
 
-    form.addEventListener('submit', function(e){
-      // Si aún no se ha configurado el form id, no interceptamos: dejamos que falle visiblemente.
-      if(form.action.indexOf('TU_FORM_ID') !== -1){
-        e.preventDefault();
-        msg.className = 'form-msg err';
-        msg.textContent = 'Formulario sin configurar todavía (falta el id de Formspree). Ver captacion/README.md.';
-        return;
-      }
-      e.preventDefault();
-      btn.disabled = true;
-      msg.className = 'form-msg';
-      msg.textContent = '';
-
-      fetch(form.action, {
-        method: 'POST',
-        body: new FormData(form),
-        headers: { 'Accept': 'application/json' }
-      }).then(function(r){
-        if(r.ok){
-          box.classList.add('done');
-          msg.className = 'form-msg ok';
-          msg.textContent = '¡Hecho! Revisa tu correo para confirmar la suscripción. El próximo Radar te llegará cuando salga el periodo del mes.';
-        }else{
-          return r.json().then(function(d){
-            throw new Error((d.errors && d.errors[0] && d.errors[0].message) || 'No se pudo enviar.');
-          });
+      form.addEventListener('submit', function(e){
+        // Si aún no se ha configurado el form id, no interceptamos: dejamos que falle visiblemente.
+        if(form.action.indexOf('TU_FORM_ID') !== -1){
+          e.preventDefault();
+          if(msg){ msg.className = 'form-msg err';
+            msg.textContent = 'Formulario sin configurar todavía (falta el id de Formspree). Ver captacion/README.md.'; }
+          return;
         }
-      }).catch(function(err){
-        btn.disabled = false;
-        msg.className = 'form-msg err';
-        msg.textContent = 'Ups: ' + err.message + ' Inténtalo de nuevo o escríbeme por LinkedIn.';
+        e.preventDefault();
+        if(btn) btn.disabled = true;
+        if(msg){ msg.className = 'form-msg'; msg.textContent = ''; }
+
+        fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { 'Accept': 'application/json' }
+        }).then(function(r){
+          if(r.ok){
+            if(box) box.classList.add('done');
+            if(msg){ msg.className = 'form-msg ok';
+              msg.textContent = '¡Hecho! Revisa tu correo para confirmar la suscripción. El próximo Radar te llegará cuando salga el periodo del mes.'; }
+          }else{
+            return r.json().then(function(d){
+              throw new Error((d.errors && d.errors[0] && d.errors[0].message) || 'No se pudo enviar.');
+            });
+          }
+        }).catch(function(err){
+          if(btn) btn.disabled = false;
+          if(msg){ msg.className = 'form-msg err';
+            msg.textContent = 'Ups: ' + err.message + ' Inténtalo de nuevo o escríbeme por LinkedIn.'; }
+        });
       });
     });
 
