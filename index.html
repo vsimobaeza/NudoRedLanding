@@ -269,8 +269,14 @@
   .signup.closing{margin:30px 0 4px;}
 
   /* ============ «ver un ejemplo» + lightbox ============ */
+  /* Columna flexible en vez de restar alturas a mano: antes el cuerpo llevaba un
+     `max-height:calc(90vh - 136px)` con la altura de cabecera y pie metida a ojo, y en
+     cuanto una de las dos crecia (p. ej. el boton de cierre a 44px) la suma pasaba de 90vh
+     y el pie se quedaba fuera. Asi cabecera y pie ocupan lo suyo y el cuerpo el resto. */
   dialog.example{border:1px solid var(--ink);padding:0;max-width:900px;width:calc(100% - 32px);max-height:90vh;
     color:var(--ink);background:var(--panel);overflow:hidden;}
+  dialog.example[open]{display:flex;flex-direction:column;}
+  .ex-head,.ex-hint,.ex-foot{flex:none;}
   dialog.example::backdrop{background:rgba(20,24,36,.55);}
   .ex-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 16px;border-bottom:1px solid var(--hair);}
   .ex-head h3{margin:0;font-size:15px;font-weight:600;letter-spacing:-.005em;}
@@ -278,7 +284,7 @@
   .ex-close{font-family:var(--sans);font-size:15px;color:var(--ink-soft);background:none;border:1px solid var(--hair);
     width:44px;height:44px;cursor:pointer;line-height:1;flex:none;}
   .ex-close:hover{background:var(--track);color:var(--ink);}
-  .ex-body{overflow:auto;max-height:calc(90vh - 136px);background:var(--track);}
+  .ex-body{flex:1 1 auto;min-height:0;overflow:auto;background:var(--track);}
   .ex-hint{margin:0;padding:8px 16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;
     text-transform:uppercase;color:var(--ink-soft);background:var(--panel);
     border-bottom:1px solid var(--hair);}
@@ -323,7 +329,6 @@
 
     /* Diálogo del ejemplo a pantalla casi completa: cada píxel cuenta para leer un informe. */
     dialog.example{width:calc(100% - 16px);max-height:94vh;}
-    .ex-body{max-height:calc(94vh - 190px);}
     .ex-foot{gap:10px;}
     .ex-foot a{flex:1 1 auto;text-align:center;padding:13px 18px;}
   }
@@ -646,16 +651,22 @@
         </div>
         <button type="button" class="ex-close js-ex-close" aria-label="Cerrar">✕</button>
       </div>
+      <!-- El aviso va FUERA del cuerpo para que no se vaya con el desplazamiento. Enlace a la
+           imagen suelta: en un movil el extracto encogido a 350px es ilegible, y abrirlo
+           aparte da el visor nativo con zoom y desplazamiento. -->
+      <p class="ex-hint">Pulsa una imagen para verla a tamaño completo</p>
       <div class="ex-body">
-        <!-- Enlace a la imagen suelta: en un movil el extracto encogido a 350px es ilegible,
-             y abrirlo aparte da el visor nativo con zoom y desplazamiento. -->
-        <p class="ex-hint">Pulsa una imagen para verla a tamaño completo</p>
+        <!-- Los dos recortes son CONTIGUOS, no solapados: portada = 0-749px del informe
+             (cajetin + titular + fichas) y mapas = 749-1555px (la seccion entera). Se
+             calculan con los limites reales del DOM; a ojo se pisaban y el extracto salia
+             con la misma seccion repetida y cortada. Si cambia el alto de la portada, hay
+             que volver a medir, no ajustar el numero a mano. -->
         <a class="ex-shot" href="teaser-portada.png" target="_blank" rel="noopener">
-          <img src="teaser-portada.png" width="1736" height="874" loading="lazy"
+          <img src="teaser-portada.png" width="1736" height="749" loading="lazy"
                alt="Portada del Radar de junio: «Madrid y Aragón, agotadas. Cataluña, al límite. Extremadura, abierta», con fichas de capacidad por comunidad">
         </a>
         <a class="ex-shot" href="teaser-mapas.png" target="_blank" rel="noopener">
-          <img src="teaser-mapas.png" width="1736" height="1141" loading="lazy"
+          <img src="teaser-mapas.png" width="1736" height="806" loading="lazy"
                alt="Mapas del Radar: nudos de la red de transporte de Aragón, Extremadura, Madrid y Cataluña, coloreados por capacidad y dimensionados por MW disponibles">
         </a>
       </div>
