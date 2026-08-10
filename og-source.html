@@ -4,58 +4,94 @@
 <meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
+  /* Sistema v2 «La Lámina» (docs/sistema-diseno.md) — tarjeta OG 1200×630 */
   :root{
-    --ink:#0D131C; --green-dark:#2FD08A; --band-soft:#9AA6B0;
-    --sans:"Archivo","Segoe UI",Arial,sans-serif;
-    --mono:"Spline Sans Mono",Consolas,monospace;
+    --ink:#141824; --ink-soft:#4A5468;
+    --paper:#F6F8FB; --panel:#FFFFFF;
+    --hair:#D9E0EA; --track:#EBEFF5;
+    --brand:#1B3FD8; --brand-deep:#122E9E; --brand-wash:#E9EEFB;
+    --brand-grid:rgba(27,63,216,.08);
+    --ok:#1F7A44;
+    --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+    --sans:"IBM Plex Sans","Segoe UI",Arial,sans-serif;
+    --mono:"IBM Plex Mono",Consolas,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{width:1200px;height:630px;}
   body{
-    background:var(--ink);color:#F4F6F5;font-family:var(--sans);
+    background:var(--paper);color:var(--ink);font-family:var(--sans);
     -webkit-font-smoothing:antialiased;overflow:hidden;position:relative;
   }
-  /* trama sutil de nodos a la derecha */
-  .grid{position:absolute;inset:0;
-    background-image:radial-gradient(rgba(47,208,138,.16) 1.4px, transparent 1.4px);
-    background-size:34px 34px;
-    -webkit-mask-image:linear-gradient(105deg, transparent 46%, #000 92%);
-            mask-image:linear-gradient(105deg, transparent 46%, #000 92%);
+
+  /* hoja: marco de tinta + papel milimetrado */
+  .sheet{
+    position:absolute;inset:20px;border:3px solid var(--ink);
+    background-color:var(--panel);
+    background-image:
+      linear-gradient(var(--brand-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--brand-grid) 1px, transparent 1px);
+    background-size:10px 10px;
+    display:flex;flex-direction:column;
   }
-  .frame{position:relative;height:100%;padding:64px 72px;display:flex;flex-direction:column;justify-content:space-between;}
-  .mast{display:flex;justify-content:space-between;align-items:center;
-    border-bottom:1px solid rgba(255,255,255,.16);padding-bottom:22px;}
-  .brand{display:inline-flex;align-items:center;gap:14px;}
-  .logo-mark{width:46px;height:46px;display:block;flex:none;}
-  .logo-mark .edge{stroke:#AEB9C2;stroke-width:2.6;}
-  .logo-mark .node{fill:#E8ECEA;}
-  .logo-mark .node.on{fill:var(--green-dark);}
-  .wordmark{font-weight:800;font-stretch:122%;font-size:34px;letter-spacing:-.01em;}
-  .wordmark b{color:var(--green-dark);}
-  .kicker{font-family:var(--mono);font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--band-soft);text-align:right;line-height:1.5;}
 
-  .mid{margin-top:6px;}
-  .rule{height:3px;width:56px;background:#C07C08;margin-bottom:26px;}
-  h1{font-size:62px;line-height:1.03;font-weight:800;font-stretch:115%;letter-spacing:-.02em;color:#fff;max-width:19ch;}
-  h1 em{font-style:normal;color:var(--green-dark);}
-  .lede{margin-top:24px;font-size:23px;line-height:1.5;color:#C9D2D8;max-width:34ch;}
-  .lede b{color:#fff;font-weight:640;}
+  /* cajetín */
+  .cajetin{display:flex;align-items:stretch;border-bottom:3px solid var(--ink);background:var(--panel);}
+  .cj-brand{display:flex;align-items:center;gap:16px;padding:18px 28px;flex:1;}
+  .logo-mark{width:48px;height:48px;flex:none;}
+  .logo-mark .edge{stroke:var(--ink);stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round;fill:none;}
+  .logo-mark .node{fill:var(--ink);}
+  .logo-mark .node.on{fill:var(--brand);}
+  .wordmark{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;letter-spacing:.01em;}
+  .wordmark b{color:var(--brand);font-weight:700;}
+  .cj-field{border-left:2px solid var(--hair);padding:14px 26px;display:flex;flex-direction:column;justify-content:center;gap:6px;}
+  .cj-k{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);}
+  .cj-v{font-family:var(--display);font-weight:600;font-size:23px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);white-space:nowrap;}
+  .cj-doc .cj-v{color:var(--brand);}
 
-  .facts{display:flex;gap:34px;font-family:var(--mono);font-size:16px;letter-spacing:.09em;text-transform:uppercase;color:var(--band-soft);}
-  .facts b{color:#F4F6F5;font-weight:600;}
-  .facts .amber{color:#E7A93B;}
-  .dot{color:rgba(255,255,255,.28);}
+  /* titular */
+  .mid{flex:1;padding:36px 56px 0;}
+  h1{
+    font-family:var(--display);font-weight:700;
+    font-size:76px;line-height:1.0;letter-spacing:.002em;max-width:740px;
+  }
+  h1 em{font-style:normal;color:var(--brand);}
+  /* La tarjeta OG conserva su medida corta a propósito: compite con el unifilar por el
+     espacio y debe leerse en miniatura. Se justifica igual que el resto de la prosa. */
+  .lede{margin-top:18px;font-size:21px;line-height:1.45;color:var(--ink-soft);max-width:530px;
+    text-align:justify;hyphens:auto;-webkit-hyphens:auto;hyphenate-limit-chars:5 3 2;}
+  .lede b{color:var(--ink);font-weight:600;}
+
+  /* unifilar (estado final: nudos verdes encendidos) */
+  .uni{margin-top:auto;}
+  .uni svg{display:block;width:100%;height:auto;}
+  .u-bus{stroke:var(--brand);stroke-width:4;fill:none;}
+  .u-stub{stroke:var(--brand);stroke-width:3.5;fill:none;}
+  .u-j{fill:var(--brand);}
+  .nd-ok{fill:var(--ok);stroke:#fff;stroke-width:3;}
+  .nd-halo{fill:none;stroke:var(--ok);stroke-width:2;opacity:.4;}
+  .nd-closed{fill:#C2CAD6;stroke:#fff;stroke-width:3;}
+
+  /* pie: leyenda + especificaciones */
+  .facts{
+    display:flex;align-items:center;gap:26px;
+    border-top:2px solid var(--hair);background:var(--panel);
+    padding:16px 56px 18px;
+  }
+  .lg{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:15px;color:var(--ink-soft);}
+  .lg svg{flex:none;}
+  .spec{margin-left:auto;font-family:var(--display);font-weight:600;font-size:17px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);}
+  .spec b{color:var(--ink);font-weight:600;}
 </style>
 </head>
 <body>
-  <div class="grid"></div>
-  <div class="frame">
-    <div class="mast">
-      <div class="brand">
+  <div class="sheet">
+
+    <div class="cajetin">
+      <div class="cj-brand">
         <svg class="logo-mark" viewBox="0 0 40 40" fill="none" role="img" aria-label="NudoRed">
-          <path class="edge" d="M9 31 V9 L31 31 V9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="edge" d="M9 31 V9 L31 31 V9"/>
           <circle class="node" cx="9" cy="31" r="3"/>
           <circle class="node" cx="9" cy="9" r="3"/>
           <circle class="node" cx="31" cy="31" r="3"/>
@@ -63,22 +99,55 @@
         </svg>
         <span class="wordmark">Nudo<b>Red</b></span>
       </div>
-      <div class="kicker">Spanish Grid<br>Capacity Intelligence</div>
+      <div class="cj-field cj-doc">
+        <span class="cj-k">Documento</span>
+        <span class="cj-v">Radar de Capacidad</span>
+      </div>
+      <div class="cj-field">
+        <span class="cj-k">Periodicidad</span>
+        <span class="cj-v">Mensual</span>
+      </div>
+      <div class="cj-field">
+        <span class="cj-k">Fuente</span>
+        <span class="cj-v">CNMC</span>
+      </div>
     </div>
 
     <div class="mid">
-      <div class="rule"></div>
       <h1>Dónde la red española tiene sitio, <em>cada mes</em>.</h1>
-      <p class="lede">Capacidad de acceso <b>nodo a nodo</b> (CEP/CAD) y qué nodos se mueven mes a mes. Datos CNMC, curados.</p>
+      <p class="lede">Capacidad de acceso <b>nodo a nodo</b> (CEP/CAD) y qué nodos se mueven mes a mes.
+        Datos CNMC, curados.</p>
+    </div>
+
+    <div class="uni">
+      <svg viewBox="0 0 1154 120" aria-hidden="true">
+        <path class="u-bus" d="M0 66 H1154"/>
+        <path class="u-stub" d="M280 66 V32"/>
+        <path class="u-stub" d="M640 66 V98"/>
+        <path class="u-stub" d="M950 66 V32"/>
+        <circle class="u-j" cx="280" cy="66" r="5"/>
+        <circle class="u-j" cx="640" cy="66" r="5"/>
+        <circle class="u-j" cx="950" cy="66" r="5"/>
+        <circle class="nd-closed" cx="90" cy="66" r="12"/>
+        <rect class="nd-halo" x="257" y="9" width="46" height="46"/>
+        <rect class="nd-ok" x="266" y="18" width="28" height="28"/>
+        <circle class="nd-halo" cx="470" cy="66" r="23"/>
+        <circle class="nd-ok" cx="470" cy="66" r="16"/>
+        <circle class="nd-closed" cx="640" cy="98" r="11"/>
+        <rect class="nd-closed" x="779" y="55" width="22" height="22"/>
+        <circle class="nd-halo" cx="950" cy="32" r="23"/>
+        <circle class="nd-ok" cx="950" cy="32" r="16"/>
+        <rect class="nd-closed" x="1079" y="55" width="22" height="22"/>
+      </svg>
     </div>
 
     <div class="facts">
-      <span><b>1</b> email/mes</span>
-      <span class="dot">·</span>
-      <span><b class="amber">CEP / CAD</b> nodo a nodo</span>
-      <span class="dot">·</span>
-      <span>Fuente <b>CNMC</b></span>
+      <span class="lg"><svg width="15" height="15" viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="5" fill="none" stroke="#141824" stroke-width="2"/></svg> 220 kV</span>
+      <span class="lg"><svg width="15" height="15" viewBox="0 0 15 15"><rect x="2.5" y="2.5" width="10" height="10" fill="none" stroke="#141824" stroke-width="2"/></svg> 400 kV</span>
+      <span class="lg"><svg width="15" height="15" viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="5.5" fill="#1F7A44"/></svg> admite nueva demanda</span>
+      <span class="spec"><b>1</b> email / mes · Fuente <b>CNMC</b></span>
     </div>
+
   </div>
 </body>
 </html>

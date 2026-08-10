@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Radar de Capacidad — Inteligencia de la red eléctrica española</title>
 <meta name="description" content="Informe mensual gratuito: dónde la red eléctrica española tiene capacidad de acceso disponible (CEP/CAD), nodo a nodo, y qué nodos liberan o pierden capacidad cada mes. Datos CNMC, curados.">
+<meta name="theme-color" content="#F6F8FB">
 
-<!-- Favicon: isotipo NudoRed (N de nodos) sobre badge oscuro, SVG inline -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%230D131C'/%3E%3Cpath d='M11 30 V10 L29 30 V10' fill='none' stroke='%23C7D0D6' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='11' cy='30' r='2.8' fill='%23E8ECEA'/%3E%3Ccircle cx='11' cy='10' r='2.8' fill='%23E8ECEA'/%3E%3Ccircle cx='29' cy='30' r='2.8' fill='%23E8ECEA'/%3E%3Ccircle cx='29' cy='10' r='3.8' fill='%232FD08A'/%3E%3C/svg%3E">
+<!-- Favicon: isotipo NudoRed (la N como red de nudos) sobre lámina de papel; nudo activo en cobalto -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23F6F8FB'/%3E%3Crect x='1.25' y='1.25' width='37.5' height='37.5' fill='none' stroke='%23141824' stroke-width='2.5'/%3E%3Cpath d='M11 30 V10 L29 30 V10' fill='none' stroke='%23141824' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='11' cy='30' r='3' fill='%23141824'/%3E%3Ccircle cx='11' cy='10' r='3' fill='%23141824'/%3E%3Ccircle cx='29' cy='30' r='3' fill='%23141824'/%3E%3Ccircle cx='29' cy='10' r='4' fill='%231B3FD8'/%3E%3C/svg%3E">
 
 <!-- Open Graph: así el enlace en LinkedIn muestra tarjeta -->
 <meta property="og:type" content="website">
@@ -25,17 +26,30 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<!-- Pesos deliberadamente ligeros (2026-08-10): sin 700 en Barlow ni en Plex Sans. El titular
+     va en 600 y los rótulos en 500 — el peso 700 saturaba la página. Mono conserva 700 porque
+     ahí lo pide el énfasis de dato. -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 
 <style>
+  /* ============ Sistema v2 «La Lámina» (docs/sistema-diseno.md) ============ */
   :root{
-    --ink:#0D131C; --paper:#F8F9F8; --panel:#FFFFFF;
-    --ink-soft:#4E5A66; --hair:#E3E6E3;
-    --green:#0B9463; --green-chip:#077A50; --green-text:#076B47; --green-dark:#2FD08A;
-    --amber:#C07C08; --amber-text:#8F5D03; --red:#C63C2C; --red-text:#A8291B; --red-dark:#FF6F5C;
-    --band-soft:#9AA6B0; --band-hair:rgba(255,255,255,.16);
-    --sans:"Archivo","Segoe UI",-apple-system,Arial,sans-serif;
-    --mono:"Spline Sans Mono","Cascadia Code",Consolas,ui-monospace,monospace;
+    /* superficie */
+    --ink:#141824; --ink-soft:#4A5468;
+    --paper:#F6F8FB; --panel:#FFFFFF;
+    --hair:#D9E0EA; --track:#EBEFF5;
+    /* marca — solo estructura, rótulos, enlaces, logo, unifilar */
+    --brand:#1B3FD8; --brand-deep:#122E9E; --brand-wash:#E9EEFB;
+    --brand-grid:rgba(27,63,216,.08);
+    /* estados de dato — solo datos, nunca marca */
+    --ok:#1F7A44; --ok-wash:#E4F1E7;
+    --warn:#A16A05; --warn-wash:#F6EDD8;
+    --bad:#B3372A; --bad-wash:#F7E7E3;
+    --closed:#9AA3B2;
+    /* tipografía */
+    --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+    --sans:"IBM Plex Sans","Segoe UI",-apple-system,Arial,sans-serif;
+    --mono:"IBM Plex Mono","Cascadia Code",Consolas,ui-monospace,monospace;
   }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
@@ -48,100 +62,167 @@
   .mono{font-family:var(--mono);}
   .num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
   h1,h2,h3{text-wrap:balance;}
-  a{color:var(--green-text);}
+  /* El énfasis dentro del texto va en 600, nunca en 700: el negrita del navegador
+     resultaba demasiado denso en párrafos largos. */
+  b,strong{font-weight:600;}
 
-  /* ============ banda superior (masthead + hero) ============ */
-  .band{background:var(--ink);color:#F4F6F5;position:relative;overflow:hidden;isolation:isolate;}
-  /* lienzo 3D de la red de nodos: detrás de todo el contenido, nunca captura el puntero */
-  .band-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;}
-  /* velo izquierda→derecha: mantiene el titular y el lede legibles sobre la red */
-  .band-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
-    background:
-      /* franja central oscura (protege el texto) y transparente en los laterales -> red visible a todo lo ancho */
-      linear-gradient(90deg, rgba(13,19,28,0) 0%, rgba(13,19,28,.32) 9%, rgba(13,19,28,.70) 28%, rgba(13,19,28,.70) 60%, rgba(13,19,28,.30) 82%, rgba(13,19,28,0) 100%),
-      linear-gradient(180deg, rgba(13,19,28,.42) 0%, rgba(13,19,28,0) 20%, rgba(13,19,28,0) 64%, rgba(13,19,28,.55) 100%);}
-  .band .doc{position:relative;z-index:2;}
-  .band .doc{padding-top:26px;padding-bottom:96px;}
-  .mast{display:flex;justify-content:space-between;align-items:center;gap:16px;
-    padding-bottom:16px;border-bottom:1px solid var(--band-hair);}
-  .brand{display:inline-flex;align-items:center;gap:11px;}
-  .logo-mark{width:34px;height:34px;display:block;flex:none;}
-  .logo-mark .edge{stroke:#AEB9C2;stroke-width:2.6;}
-  .logo-mark .node{fill:#E8ECEA;}
-  .logo-mark .node.on{fill:var(--green-dark);}
-  .wordmark{font-weight:800;font-stretch:122%;font-size:22px;letter-spacing:-.01em;line-height:1;}
-  .wordmark b{color:var(--green-dark);font-weight:800;}
-  .mast .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--band-soft);text-align:right;}
-
-  .hero{padding-top:36px;}
-  .hero h1{
-    font-size:clamp(30px,5.4vw,44px);line-height:1.05;font-weight:800;font-stretch:115%;
-    letter-spacing:-.02em;margin:0;color:#FFFFFF;
+  /* ============ composición del texto de cuerpo ============ */
+  /* Mismo criterio que el informe (docs/sistema-diseno.md §2): la prosa va JUSTIFICADA y a
+     todo el ancho de su contenedor, con partido de palabras — sin `hyphens:auto` el
+     castellano justificado abre ríos de espacio. Depende de `<html lang="es">`.
+     Fuera: rótulos, cifras mono, leyendas y pies de dato, que van en bandera. */
+  .hero-copy .lede,
+  .signup p.sub,
+  .wcard p,
+  .statcap,
+  .trust,
+  .ex-foot .note{
+    text-align:justify;
+    hyphens:auto;-webkit-hyphens:auto;
+    hyphenate-limit-chars:5 3 2;
   }
-  .hero h1 em{font-style:normal;color:var(--green-dark);}
-  .hero .lede{font-size:16.5px;color:#C9D2D8;margin:18px 0 0;line-height:1.6;text-wrap:pretty;}
-  .hero .lede b{font-weight:640;color:#FFFFFF;}
-  .band-facts{
-    display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:26px;
-    font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--band-soft);
-  }
-  .band-facts .k{display:inline-flex;align-items:baseline;gap:8px;}
-  .band-facts b{color:#F4F6F5;font-weight:600;}
-  .band-facts b.amber{color:#E7A93B;}
+  a{color:var(--brand-deep);}
+  ::selection{background:var(--brand-wash);color:var(--ink);}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+  @media (prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth;} }
 
-  /* ============ tarjeta de suscripción (solapa la banda, guiño a .gauges) ============ */
-  .signup{background:var(--panel);border:1px solid var(--hair);
-    margin:-64px 0 8px;position:relative;padding:26px 26px 24px;
-    box-shadow:0 18px 40px -28px rgba(13,19,28,.5);}
-  .signup .rule{height:2px;background:var(--amber);width:40px;margin:0 0 14px;}
-  .signup h2{font-size:20px;font-weight:770;font-stretch:110%;letter-spacing:-.015em;margin:0 0 6px;}
-  .signup p.sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 18px;max-width:56ch;text-wrap:pretty;}
+  /* ============ hoja de lámina (hero) ============ */
+  .hero-zone{padding-top:26px;}
+  .sheet{
+    background-color:var(--panel);border:1px solid var(--ink);
+    background-image:
+      linear-gradient(var(--brand-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--brand-grid) 1px, transparent 1px);
+    background-size:8px 8px;
+  }
+
+  /* --- cajetín (title block) --- */
+  .cajetin{display:flex;align-items:stretch;border-bottom:1px solid var(--ink);background:var(--panel);}
+  .cj-brand{display:flex;align-items:center;gap:10px;padding:12px 16px;flex:1;min-width:0;}
+  .logo-mark{width:30px;height:30px;flex:none;}
+  .logo-mark .edge{stroke:var(--ink);stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round;fill:none;}
+  .logo-mark .node{fill:var(--ink);}
+  .logo-mark .node.on{fill:var(--brand);}
+  .wordmark{font-family:var(--display);font-weight:600;font-size:23px;line-height:1;letter-spacing:.01em;}
+  .wordmark b{color:var(--brand);font-weight:600;}
+  .cj-field{border-left:1px solid var(--hair);padding:8px 16px;display:flex;flex-direction:column;justify-content:center;gap:3px;}
+  .cj-k{font-family:var(--display);font-weight:500;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);}
+  .cj-v{font-family:var(--display);font-weight:500;font-size:14.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink);white-space:nowrap;}
+  .cj-doc .cj-v{color:var(--brand);}
+
+  /* --- titular sobre papel milimetrado --- */
+  .hero-copy{padding:34px 30px 8px;}
+  .hero-copy h1{
+    font-family:var(--display);font-weight:600;
+    font-size:clamp(36px,8.5vw,58px);line-height:1.04;letter-spacing:.002em;
+    margin:0;
+  }
+  .hero-copy h1 em{font-style:normal;color:var(--brand);}
+  .hero-copy .lede{font-size:16px;color:var(--ink-soft);margin:14px 0 0;line-height:1.6;max-width:none;text-wrap:pretty;}
+  .hero-copy .lede b{font-weight:600;color:var(--ink);}
+
+  /* --- unifilar animado: la línea se dibuja y los nudos con hueco se encienden --- */
+  .uni{margin:30px 0 0;}
+  .uni-svg{display:block;width:100%;height:auto;}
+  .uni-svg .u-bus{stroke:var(--brand);stroke-width:2.4;fill:none;}
+  .uni-svg .u-stub{stroke:var(--brand);stroke-width:2;fill:none;}
+  .uni-svg .u-j{fill:var(--brand);}
+  .uni-svg .nd-ok{fill:var(--ok);stroke:#fff;stroke-width:2.5;}
+  .uni-svg .nd-halo{fill:none;stroke:var(--ok);stroke-width:1.5;opacity:.4;}
+  .uni-svg .nd-closed{fill:#C2CAD6;stroke:#fff;stroke-width:2.5;}
+  .uni-legend{
+    display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;
+    padding:10px 30px 0;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);
+  }
+  .uni-legend .lg{display:inline-flex;align-items:center;gap:6px;}
+  .uni-legend .lg svg{flex:none;}
+  .uni-legend .note{margin-left:auto;text-transform:uppercase;letter-spacing:.08em;font-size:9.5px;}
+
+  /* --- fila de especificaciones (campos de cajetín inferiores) --- */
+  .sheet-facts{
+    /* Fondo BLANCO, sin milimetrado: es la banda de especificaciones del cajetín, y en una
+       lámina real los campos rotulados van sobre papel limpio, no sobre la retícula.
+       `background` (atajo) es lo que corta el degradado que hereda de `.sheet`. */
+    background:var(--panel);
+    margin-top:18px;border-top:1px solid var(--hair);padding:12px 30px 14px;
+    display:flex;flex-wrap:wrap;gap:6px 24px;
+    font-family:var(--display);font-weight:500;font-size:13px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+  .sheet-facts b{color:var(--ink);font-weight:600;}
+
+  @media (prefers-reduced-motion:no-preference){
+    /* la línea se dibuja de izquierda a derecha; cada nudo aparece cuando la línea lo alcanza */
+    .u-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:uniDraw .3s linear both;}
+    .u-bus{animation-duration:1.25s;animation-delay:.12s;animation-timing-function:cubic-bezier(.3,0,.4,1);}
+    @keyframes uniDraw{to{stroke-dashoffset:0;}}
+    .u-node,.u-j{opacity:0;transform-box:fill-box;transform-origin:center;transform:scale(.5);
+      animation:uniPop .4s cubic-bezier(.2,.9,.3,1.3) both;}
+    @keyframes uniPop{to{opacity:1;transform:scale(1);}}
+    .nd-halo{animation:haloBreath 4s ease-in-out 2s infinite;transform-box:fill-box;transform-origin:center;}
+    @keyframes haloBreath{0%,100%{opacity:.4;transform:scale(1);}50%{opacity:.75;transform:scale(1.1);}}
+  }
+
+  /* ============ campo de suscripción (cajetín de formulario) ============ */
+  .signup{background:var(--panel);border:1px solid var(--ink);margin:26px 0 8px;}
+  .sg-strip{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:7px 16px;border-bottom:1px solid var(--hair);background:var(--brand-wash);}
+  .sg-tag{font-family:var(--display);font-weight:500;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-deep);}
+  .sg-meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--ink-soft);}
+  .sg-body{padding:20px 22px;}
+  .signup h2{font-family:var(--display);font-weight:600;font-size:27px;line-height:1.05;letter-spacing:.005em;margin:0 0 6px;}
+  .signup p.sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px;max-width:none;text-wrap:pretty;}
   .form-row{display:flex;gap:10px;flex-wrap:wrap;}
   .form-row input[type=email]{
     flex:1 1 240px;min-width:0;font-family:var(--sans);font-size:15px;color:var(--ink);
-    padding:13px 14px;border:1px solid #C9D0CB;border-radius:2px;background:#fff;
+    padding:12px 14px;border:1px solid #B6C0CF;border-radius:0;background:#fff;
   }
-  .form-row input[type=email]:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(192,124,8,.14);}
+  .form-row input[type=email]::placeholder{color:#6B7488;}
   .form-row button{
-    font-family:var(--sans);font-weight:680;font-size:14.5px;letter-spacing:.01em;color:#fff;
-    background:var(--ink);border:1px solid var(--ink);border-radius:2px;padding:13px 22px;cursor:pointer;
-    transition:background .15s ease;
+    font-family:var(--sans);font-weight:600;font-size:14.5px;letter-spacing:.01em;color:#fff;
+    background:var(--brand);border:1px solid var(--brand);border-radius:0;padding:12px 24px;cursor:pointer;
+    transition:background .15s ease,border-color .15s ease;
   }
-  .form-row button:hover{background:#1b2836;}
+  .form-row button:hover{background:var(--brand-deep);border-color:var(--brand-deep);}
   .form-row button:disabled{opacity:.55;cursor:progress;}
-  .fineprint{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--ink-soft);
-    margin:13px 0 0;display:flex;flex-wrap:wrap;gap:5px 16px;}
-  .fineprint .k{display:inline-flex;align-items:center;gap:6px;}
-  .fineprint i{width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;}
+  .fineprint{margin:14px 0 0;display:flex;flex-wrap:wrap;gap:4px 0;font-size:12px;color:var(--ink-soft);}
+  .fineprint .k{padding-right:14px;}
+  .fineprint .k + .k{border-left:1px solid var(--hair);padding-left:14px;}
   .form-msg{margin:14px 0 0;font-size:13.5px;line-height:1.5;display:none;}
-  .form-msg.ok{display:block;color:var(--green-text);}
-  .form-msg.err{display:block;color:var(--red-text);}
+  .form-msg.ok{display:block;color:var(--ok);font-weight:600;}
+  .form-msg.err{display:block;color:var(--bad);font-weight:600;}
   .signup.done .form-row,.signup.done .fineprint{display:none;}
 
-  /* ============ qué recibes ============ */
-  .section{padding:30px 0 6px;}
-  .section-h{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-bottom:6px;}
-  .section-h h2{font-size:19px;font-weight:760;font-stretch:110%;letter-spacing:-.015em;margin:0;}
-  .section-h .s-note{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;}
-  .section-rule{height:2px;background:var(--ink);width:44px;margin:0 0 16px;}
+  /* ============ cabecera de sección: nudo sobre línea (unifilar) ============ */
+  .section{padding:34px 0 6px;}
+  .sec-h{display:flex;align-items:center;gap:12px;margin:0 0 18px;}
+  .sec-h .sec-mark{flex:none;display:block;}
+  .sec-h .sec-mark line{stroke:var(--brand);stroke-width:1.5;}
+  .sec-h .sec-mark circle{fill:var(--brand);}
+  .sec-h h2{font-family:var(--display);font-weight:600;font-size:17.5px;letter-spacing:.07em;text-transform:uppercase;margin:0;line-height:1.1;}
+  .sec-fill{flex:1;height:0;border-top:1px solid var(--brand);}
+  .sec-note{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;}
 
-  .whats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:4px;}
-  .wcard{border:1px solid var(--hair);background:var(--panel);display:flex;flex-direction:column;overflow:hidden;
-    transition:transform .22s cubic-bezier(.22,1,.36,1),border-color .22s ease,box-shadow .22s ease;}
-  .wcard:hover{transform:translateY(-3px);border-color:#BFD6C9;
-    box-shadow:0 16px 34px -24px rgba(11,148,99,.55);}
-  .wviz{padding:12px 15px 10px;background:linear-gradient(180deg,#FBFCFB 0%,#F2F5F2 100%);
-    border-bottom:1px solid var(--hair);}
+  /* ============ detalles de lámina (qué recibes) ============ */
+  .whats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .wcard{border:1px solid var(--hair);background:var(--panel);display:flex;flex-direction:column;
+    transition:border-color .18s ease;}
+  .wcard:hover{border-color:var(--ink);}
+  .wviz{padding:14px 14px 10px;border-bottom:1px solid var(--hair);background-color:var(--panel);
+    background-image:
+      linear-gradient(var(--brand-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--brand-grid) 1px, transparent 1px);
+    background-size:8px 8px;}
   .wviz svg{display:block;width:100%;height:auto;overflow:visible;}
-  .wmono{font-family:var(--mono);}
-  .wbody{padding:14px 15px 15px;}
-  .wcard .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--amber-text);margin:0 0 8px;}
-  .wcard h3{font-size:15px;font-weight:730;letter-spacing:-.01em;margin:0 0 5px;}
+  .svg-cap{font-family:var(--display);font-weight:500;letter-spacing:.08em;}
+  .wbody{padding:13px 15px 15px;}
+  .wcard .tag{font-family:var(--display);font-weight:500;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-deep);margin:0 0 7px;}
+  .wcard h3{font-size:15px;font-weight:600;letter-spacing:-.005em;margin:0 0 5px;}
   .wcard p{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.5;text-wrap:pretty;}
-  /* latido sutil de los nodos "con hueco" (verde), enlaza con el hero */
+  /* micro-interacciones sobrias */
   @media (prefers-reduced-motion:no-preference){
-    .n-on{transform-box:fill-box;transform-origin:center;animation:nodeBreath 3.4s ease-in-out infinite;}
-    @keyframes nodeBreath{0%,100%{opacity:.92;transform:scale(1);}50%{opacity:1;transform:scale(1.16);}}
+    .n-on{transform-box:fill-box;transform-origin:center;animation:nodeBreath 3.8s ease-in-out infinite;}
+    @keyframes nodeBreath{0%,100%{opacity:.9;transform:scale(1);}50%{opacity:1;transform:scale(1.12);}}
     .wcard:hover .dbar{animation:barRise .5s cubic-bezier(.22,1,.36,1) both;}
     @keyframes barRise{from{transform:scaleY(.55);}to{transform:scaleY(1);}}
     .dbar{transform-box:fill-box;}
@@ -149,146 +230,211 @@
   }
 
   /* ============ credibilidad / cierre ============ */
-  .trust{margin-top:20px;font-size:13px;color:var(--ink-soft);line-height:1.6;text-wrap:pretty;}
-  .trust b{color:var(--ink);font-weight:640;}
-
-  /* dato real (credibilidad, sin CTA) */
-  .statline{display:flex;align-items:center;gap:22px;margin-top:26px;border-top:1px solid var(--hair);
-    padding-top:20px;flex-wrap:wrap;}
-  .statfig{font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:.9;white-space:nowrap;}
-  .statnum{font-size:40px;font-weight:600;color:var(--green-text);letter-spacing:-.02em;}
-  .statden{font-size:22px;color:var(--ink-soft);}
-  .statcap{margin:0;flex:1 1 300px;font-size:13.5px;color:var(--ink-soft);line-height:1.5;text-wrap:pretty;}
-  .statcap b{color:var(--ink);font-weight:640;}
-  .statsrc{display:block;margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.09em;
-    text-transform:uppercase;color:#9AA69A;}
-
-  /* CTA de cierre: el MISMO formulario, en el punto de decisión tras leer */
-  .signup.closing{margin:30px 0 4px;}
-
-  /* "Ver un ejemplo" + lightbox (enseña el informe sin regalar el detalle) */
-  .see-example{margin-top:16px;text-align:center;}
-  .see-example button{font-family:var(--mono);font-size:12px;letter-spacing:.03em;color:var(--green-text);
+  .see-example{margin-top:22px;text-align:center;}
+  .see-example button{font-family:var(--sans);font-weight:600;font-size:14px;color:var(--brand-deep);
     background:none;border:0;cursor:pointer;padding:6px 2px;border-bottom:1px solid transparent;transition:border-color .18s ease;}
-  .see-example button:hover{border-bottom-color:var(--green);}
+  .see-example button:hover{border-bottom-color:var(--brand-deep);}
   .see-example .arw{display:inline-block;transition:transform .18s ease;}
   .see-example button:hover .arw{transform:translateX(3px);}
-  dialog.example{border:0;padding:0;max-width:900px;width:calc(100% - 32px);max-height:90vh;color:var(--ink);
-    background:var(--panel);box-shadow:0 30px 80px -18px rgba(13,19,28,.6);overflow:hidden;}
-  dialog.example::backdrop{background:rgba(13,19,28,.62);backdrop-filter:blur(2px);}
-  .ex-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:15px 18px;border-bottom:1px solid var(--hair);}
-  .ex-head h3{margin:0;font-size:15px;font-weight:740;letter-spacing:-.01em;}
-  .ex-head .ex-sub{margin:2px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--ink-soft);text-transform:uppercase;}
-  .ex-close{font-family:var(--mono);font-size:14px;color:var(--ink-soft);background:none;border:1px solid var(--hair);
-    width:30px;height:30px;cursor:pointer;line-height:1;flex:none;}
-  .ex-close:hover{color:var(--ink);border-color:#C9D0CB;}
-  .ex-body{overflow:auto;max-height:calc(90vh - 132px);background:#EDF0ED;}
-  .ex-body img{display:block;width:100%;height:auto;border-bottom:1px solid var(--hair);}
-  .ex-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 18px;border-top:1px solid var(--hair);flex-wrap:wrap;}
-  .ex-foot .note{margin:0;font-size:12px;color:var(--ink-soft);}
-  .ex-foot a{font-family:var(--sans);font-weight:680;font-size:13px;color:#fff;background:var(--ink);
-    text-decoration:none;padding:9px 16px;white-space:nowrap;}
-  .ex-foot a:hover{background:#1b2836;}
 
-  footer{margin-top:34px;border-top:1px solid var(--hair);padding:18px 0 40px;
+  .statline{display:flex;align-items:center;gap:22px;margin-top:30px;border-top:1px solid var(--hair);
+    padding-top:22px;flex-wrap:wrap;}
+  .statfig{font-family:var(--display);font-weight:600;line-height:.85;white-space:nowrap;}
+  .statnum{font-size:58px;color:var(--ok);}
+  .statden{font-size:30px;color:var(--ink-soft);font-weight:500;}
+  .statcap{margin:0;flex:1 1 300px;font-size:13.5px;color:var(--ink-soft);line-height:1.5;text-wrap:pretty;}
+  .statcap b{color:var(--ink);font-weight:600;}
+  .statsrc{display:block;margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-soft);}
+
+  .trust{margin-top:24px;font-size:13.5px;color:var(--ink-soft);line-height:1.6;text-wrap:pretty;}
+  .trust b{color:var(--ink);font-weight:600;}
+
+  .signup.closing{margin:30px 0 4px;}
+
+  /* ============ «ver un ejemplo» + lightbox ============ */
+  dialog.example{border:1px solid var(--ink);padding:0;max-width:900px;width:calc(100% - 32px);max-height:90vh;
+    color:var(--ink);background:var(--panel);overflow:hidden;}
+  dialog.example::backdrop{background:rgba(20,24,36,.55);}
+  .ex-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 16px;border-bottom:1px solid var(--hair);}
+  .ex-head h3{margin:0;font-size:15px;font-weight:600;letter-spacing:-.005em;}
+  .ex-head .ex-sub{margin:2px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-soft);text-transform:uppercase;}
+  .ex-close{font-family:var(--sans);font-size:15px;color:var(--ink-soft);background:none;border:1px solid var(--hair);
+    width:32px;height:32px;cursor:pointer;line-height:1;flex:none;}
+  .ex-close:hover{background:var(--track);color:var(--ink);}
+  .ex-body{overflow:auto;max-height:calc(90vh - 136px);background:var(--track);}
+  .ex-body img{display:block;width:100%;height:auto;border-bottom:1px solid var(--hair);}
+  .ex-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 16px;border-top:1px solid var(--hair);flex-wrap:wrap;}
+  .ex-foot .note{margin:0;font-size:12.5px;color:var(--ink-soft);}
+  .ex-foot a{font-family:var(--sans);font-weight:600;font-size:13.5px;color:#fff;background:var(--brand);
+    text-decoration:none;padding:10px 18px;white-space:nowrap;}
+  .ex-foot a:hover{background:var(--brand-deep);}
+
+  footer{margin-top:36px;border-top:1px solid var(--hair);padding:18px 0 44px;
     font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);
     display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;}
   footer a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--hair);}
   footer a:hover{color:var(--ink);}
 
-  @media (max-width:640px){
+  /* ============ móvil ============ */
+  @media (max-width:680px){
     .whats{grid-template-columns:1fr;}
-    .band .doc{padding-bottom:88px;}
+    .cj-per{display:none;}
+  }
+  @media (max-width:460px){
+    .cj-src{display:none;}
+    .hero-copy{padding:24px 18px 6px;}
+    .uni-legend{padding:8px 18px 0;}
+    .uni-legend .note{margin-left:0;flex-basis:100%;}
+    .sheet-facts{padding:11px 18px 13px;gap:5px 16px;font-size:12px;}
+    .sg-body{padding:18px 16px;}
+    .form-row button{flex:1 1 auto;}
   }
 </style>
 </head>
 <body>
 
-  <!-- ============ BANDA: masthead + hero ============ -->
-  <header class="band">
-    <canvas class="band-canvas" id="grid-canvas" aria-hidden="true"></canvas>
-    <div class="band-scrim" aria-hidden="true"></div>
+  <!-- ============ HOJA: cajetín + titular + unifilar animado ============ -->
+  <header class="hero-zone">
     <div class="doc">
-      <div class="mast">
-        <div class="brand">
-          <svg class="logo-mark" viewBox="0 0 40 40" fill="none" role="img" aria-label="NudoRed">
-            <path class="edge" d="M9 31 V9 L31 31 V9" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle class="node" cx="9" cy="31" r="3"/>
-            <circle class="node" cx="9" cy="9" r="3"/>
-            <circle class="node" cx="31" cy="31" r="3"/>
-            <circle class="node on" cx="31" cy="9" r="4.4"/>
-          </svg>
-          <span class="wordmark">Nudo<b>Red</b></span>
+      <div class="sheet">
+
+        <div class="cajetin">
+          <div class="cj-brand">
+            <svg class="logo-mark" viewBox="0 0 40 40" fill="none" role="img" aria-label="NudoRed">
+              <path class="edge" d="M9 31 V9 L31 31 V9"/>
+              <circle class="node" cx="9" cy="31" r="3"/>
+              <circle class="node" cx="9" cy="9" r="3"/>
+              <circle class="node" cx="31" cy="31" r="3"/>
+              <circle class="node on" cx="31" cy="9" r="4.4"/>
+            </svg>
+            <span class="wordmark">Nudo<b>Red</b></span>
+          </div>
+          <div class="cj-field cj-doc">
+            <span class="cj-k">Documento</span>
+            <span class="cj-v">Radar de Capacidad</span>
+          </div>
+          <div class="cj-field cj-per">
+            <span class="cj-k">Periodicidad</span>
+            <span class="cj-v">Mensual</span>
+          </div>
+          <div class="cj-field cj-src">
+            <span class="cj-k">Fuente</span>
+            <span class="cj-v">CNMC</span>
+          </div>
         </div>
-        <div class="kicker">Spanish Grid<br>Capacity Intelligence</div>
-      </div>
 
-      <div class="hero">
-        <h1>Dónde la red española tiene sitio, <em>cada mes</em>.</h1>
-        <p class="lede">Un informe mensual con la <b>capacidad de acceso disponible nodo a nodo</b>
-          (CEP/CAD) de la red eléctrica española — y qué nodos <b>liberan o pierden</b> capacidad
-          respecto al mes anterior. Datos oficiales de CNMC, curados y legibles.</p>
+        <div class="hero-copy">
+          <h1>Dónde la red española tiene sitio, <em>cada mes</em>.</h1>
+          <p class="lede">Un informe mensual con la <b>capacidad de acceso disponible nodo a nodo</b>
+            (CEP/CAD) de la red eléctrica española — y qué nodos <b>liberan o pierden</b> capacidad
+            respecto al mes anterior. Datos oficiales de CNMC, curados y legibles.</p>
+        </div>
 
-        <div class="band-facts">
+        <!-- Unifilar: la línea de transporte cruza la lámina; los nudos con hueco se encienden en verde -->
+        <div class="uni">
+          <svg class="uni-svg" viewBox="0 0 680 150" role="img"
+               aria-label="Esquema unifilar ilustrativo: una línea de transporte con nudos; los marcados en verde admiten nueva demanda">
+            <path class="u-draw u-bus" d="M0 88 H680" pathLength="1"/>
+            <path class="u-draw u-stub" d="M150 88 V48" pathLength="1" style="animation-delay:.42s"/>
+            <path class="u-draw u-stub" d="M352 88 V118" pathLength="1" style="animation-delay:.78s"/>
+            <path class="u-draw u-stub" d="M545 88 V48" pathLength="1" style="animation-delay:1.12s"/>
+            <circle class="u-j" cx="150" cy="88" r="4" style="animation-delay:.5s"/>
+            <circle class="u-j" cx="352" cy="88" r="4" style="animation-delay:.86s"/>
+            <circle class="u-j" cx="545" cy="88" r="4" style="animation-delay:1.2s"/>
+            <g class="u-node" style="animation-delay:.3s"><circle class="nd-closed" cx="52" cy="88" r="10"/></g>
+            <g class="u-node" style="animation-delay:.62s">
+              <rect class="nd-halo" x="132" y="18" width="36" height="36"/>
+              <rect class="nd-ok" x="139" y="25" width="22" height="22"/>
+            </g>
+            <g class="u-node" style="animation-delay:.72s">
+              <circle class="nd-halo" cx="248" cy="88" r="19"/>
+              <circle class="nd-ok" cx="248" cy="88" r="13"/>
+            </g>
+            <g class="u-node" style="animation-delay:.95s"><circle class="nd-closed" cx="352" cy="126" r="10"/></g>
+            <g class="u-node" style="animation-delay:1.02s"><rect class="nd-closed" x="443" y="79" width="18" height="18"/></g>
+            <g class="u-node" style="animation-delay:1.3s">
+              <circle class="nd-halo" cx="545" cy="36" r="19"/>
+              <circle class="nd-ok" cx="545" cy="36" r="13"/>
+            </g>
+            <g class="u-node" style="animation-delay:1.4s"><rect class="nd-closed" x="627" y="79" width="18" height="18"/></g>
+          </svg>
+          <div class="uni-legend" aria-hidden="true">
+            <span class="lg"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="#141824" stroke-width="1.6"/></svg> 220 kV</span>
+            <span class="lg"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" fill="none" stroke="#141824" stroke-width="1.6"/></svg> 400 kV</span>
+            <span class="lg"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.4" fill="#1F7A44"/></svg> admite nueva demanda</span>
+            <span class="note">Esquema ilustrativo</span>
+          </div>
+        </div>
+
+        <div class="sheet-facts">
           <span class="k"><b>1</b> email al mes</span>
-          <span class="k"><b class="amber">CEP / CAD</b> nodo a nodo</span>
+          <span class="k"><b>CEP / CAD</b> nodo a nodo</span>
           <span class="k"><b>Δ</b> qué cambió vs. mes anterior</span>
           <span class="k">Fuente <b>CNMC</b></span>
         </div>
+
       </div>
     </div>
   </header>
 
   <main class="doc">
 
-    <!-- ============ tarjeta de suscripción ============ -->
+    <!-- ============ campo de suscripción ============ -->
     <section class="signup" id="signup">
-      <div class="rule"></div>
-      <h2>Recibe el Radar cada mes</h2>
-      <p class="sub">Gratis. Se envía cuando CNMC publica el nuevo periodo (~día 9–10 de cada mes).
-        Sin spam; un solo correo mensual.</p>
+      <div class="sg-strip">
+        <span class="sg-tag">Suscripción</span>
+        <span class="sg-meta">1 email / mes · gratis</span>
+      </div>
+      <div class="sg-body">
+        <h2>Recibe el Radar cada mes</h2>
+        <p class="sub">Gratis. Se envía cuando CNMC publica el nuevo periodo (~día 9–10 de cada mes).
+          Sin spam; un solo correo mensual.</p>
 
-      <!-- Formspree configurado (form mqerydva). Endpoint de captura; ver captacion/README.md -->
-      <form id="radar-form" class="js-radar-form" action="https://formspree.io/f/mqerydva" method="POST">
-        <div class="form-row">
-          <label for="email" class="mono" style="position:absolute;left:-9999px;">Email</label>
-          <input id="email" type="email" name="email" required autocomplete="email"
-                 placeholder="tu@empresa.com" inputmode="email">
-          <button type="submit" id="submit-btn">Suscribirme</button>
-        </div>
-        <!-- honeypot anti-bots (Formspree lo ignora si viene relleno) -->
-        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
-               style="position:absolute;left:-9999px;" aria-hidden="true">
-        <input type="hidden" name="_subject" value="Nueva alta — Radar de Capacidad">
-        <div class="fineprint">
-          <span class="k"><i></i> Sin spam</span>
-          <span class="k"><i></i> Baja cuando quieras</span>
-          <span class="k"><i></i> Tu email no se comparte</span>
-        </div>
-      </form>
-      <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
+        <!-- Formspree configurado (form mqerydva). Endpoint de captura; ver captacion/README.md -->
+        <form id="radar-form" class="js-radar-form" action="https://formspree.io/f/mqerydva" method="POST">
+          <div class="form-row">
+            <label for="email" style="position:absolute;left:-9999px;">Email</label>
+            <input id="email" type="email" name="email" required autocomplete="email"
+                   placeholder="tu@empresa.com" inputmode="email">
+            <button type="submit" id="submit-btn">Suscribirme</button>
+          </div>
+          <!-- honeypot anti-bots (Formspree lo ignora si viene relleno) -->
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
+                 style="position:absolute;left:-9999px;" aria-hidden="true">
+          <input type="hidden" name="_subject" value="Nueva alta — Radar de Capacidad">
+          <div class="fineprint">
+            <span class="k">Sin spam</span>
+            <span class="k">Baja cuando quieras</span>
+            <span class="k">Tu email no se comparte</span>
+          </div>
+        </form>
+        <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
+      </div>
     </section>
 
-    <!-- ============ qué recibes ============ -->
+    <!-- ============ qué recibes: detalles de lámina ============ -->
     <section class="section">
-      <div class="section-h">
+      <div class="sec-h">
+        <svg class="sec-mark" width="30" height="10" viewBox="0 0 30 10" aria-hidden="true">
+          <line x1="0" y1="5" x2="30" y2="5"/><circle cx="16" cy="5" r="4.4"/>
+        </svg>
         <h2>Qué llega a tu bandeja</h2>
-        <span class="s-note">Cada edición</span>
+        <i class="sec-fill" aria-hidden="true"></i>
+        <span class="sec-note">cada edición</span>
       </div>
-      <div class="section-rule"></div>
 
       <div class="whats">
         <div class="wcard">
           <div class="wviz">
-            <!-- Medidor de capacidad: el «disponible» (verde) frente al total -->
+            <!-- Medidor de capacidad: relleno --ok sobre --track, marcador de tope en tinta -->
             <svg viewBox="0 0 224 58" role="img" aria-label="Medidor: MW disponibles frente al total de la red">
-              <text x="1" y="11" class="wmono" font-size="9.5" letter-spacing=".06em" fill="#076B47" font-weight="600">DISPONIBLE</text>
-              <text x="223" y="11" text-anchor="end" class="wmono" font-size="9.5" letter-spacing=".06em" fill="#9AA69A">TOTAL</text>
-              <rect x="2" y="25" width="220" height="7" rx="3.5" fill="#E7EBE7"/>
-              <rect x="2" y="25" width="96" height="7" rx="3.5" fill="#0B9463"/>
-              <line x1="98" y1="19" x2="98" y2="38" stroke="#0B9463" stroke-width="2"/>
-              <circle cx="98" cy="28.5" r="4.5" fill="#0B9463" stroke="#fff" stroke-width="2"/>
-              <g stroke="#D5DAD5" stroke-width="1.6" stroke-linecap="round">
+              <text x="1" y="11" class="svg-cap" font-size="10" fill="#1F7A44">DISPONIBLE</text>
+              <text x="223" y="11" text-anchor="end" class="svg-cap" font-size="10" fill="#4A5468">TOTAL</text>
+              <rect x="2" y="24" width="220" height="9" fill="#EBEFF5" stroke="#D9E0EA"/>
+              <rect x="2" y="24" width="96" height="9" fill="#1F7A44"/>
+              <line x1="98" y1="18" x2="98" y2="39" stroke="#141824" stroke-width="2"/>
+              <g stroke="#D9E0EA" stroke-width="1.6" stroke-linecap="round">
                 <line x1="14" y1="44" x2="14" y2="50"/><line x1="38" y1="44" x2="38" y2="50"/>
                 <line x1="63" y1="44" x2="63" y2="50"/><line x1="87" y1="44" x2="87" y2="50"/>
                 <line x1="112" y1="44" x2="112" y2="50"/><line x1="136" y1="44" x2="136" y2="50"/>
@@ -298,7 +444,7 @@
             </svg>
           </div>
           <div class="wbody">
-            <p class="tag">Capacidad</p>
+            <p class="tag">Detalle A · Capacidad</p>
             <h3>MW disponibles reales</h3>
             <p>El «MW disponible» correcto para conectar carga o generación, leído del BOE (CEP/CAD),
                no la cifra bruta que confunde.</p>
@@ -307,24 +453,24 @@
 
         <div class="wcard">
           <div class="wviz">
-            <!-- Delta mes a mes: barras verdes (liberan) sobre el eje, rojas (pierden) debajo -->
+            <!-- Delta mes a mes: barras --ok (liberan) sobre el eje, --bad (pierden) debajo -->
             <svg viewBox="0 0 224 58" role="img" aria-label="Cambios de capacidad respecto al mes anterior">
-              <text x="1" y="9" class="wmono" font-size="8" letter-spacing=".07em" fill="#9AA69A">Δ VS. MES ANTERIOR</text>
-              <line x1="2" y1="36" x2="222" y2="36" stroke="#D5DAD5" stroke-width="1.4"/>
+              <text x="1" y="10" class="svg-cap" font-size="9.5" fill="#4A5468">Δ VS. MES ANTERIOR</text>
+              <line x1="2" y1="36" x2="222" y2="36" stroke="#141824" stroke-width="1.2"/>
               <g>
-                <rect class="dbar up"   x="8"   y="16" width="13" height="20" rx="2.5" fill="#0B9463"/>
-                <rect class="dbar down" x="34"  y="36" width="13" height="10" rx="2.5" fill="#C63C2C"/>
-                <rect class="dbar up"   x="60"  y="22" width="13" height="14" rx="2.5" fill="#0B9463"/>
-                <rect class="dbar up"   x="86"  y="17" width="13" height="19" rx="2.5" fill="#0B9463"/>
-                <rect class="dbar down" x="112" y="36" width="13" height="15" rx="2.5" fill="#C63C2C"/>
-                <rect class="dbar up"   x="138" y="27" width="13" height="9"  rx="2.5" fill="#0B9463"/>
-                <rect class="dbar down" x="164" y="36" width="13" height="7"  rx="2.5" fill="#C63C2C"/>
-                <rect class="dbar up"   x="190" y="18" width="13" height="18" rx="2.5" fill="#0B9463"/>
+                <rect class="dbar up"   x="8"   y="16" width="13" height="20" fill="#1F7A44"/>
+                <rect class="dbar down" x="34"  y="36" width="13" height="10" fill="#B3372A"/>
+                <rect class="dbar up"   x="60"  y="22" width="13" height="14" fill="#1F7A44"/>
+                <rect class="dbar up"   x="86"  y="17" width="13" height="19" fill="#1F7A44"/>
+                <rect class="dbar down" x="112" y="36" width="13" height="15" fill="#B3372A"/>
+                <rect class="dbar up"   x="138" y="27" width="13" height="9"  fill="#1F7A44"/>
+                <rect class="dbar down" x="164" y="36" width="13" height="7"  fill="#B3372A"/>
+                <rect class="dbar up"   x="190" y="18" width="13" height="18" fill="#1F7A44"/>
               </g>
             </svg>
           </div>
           <div class="wbody">
-            <p class="tag">Movimiento</p>
+            <p class="tag">Detalle B · Movimiento</p>
             <h3>Qué cambió este mes</h3>
             <p>Los nodos que <b>liberan</b> o <b>pierden</b> capacidad frente al mes anterior — el
                histórico que CNMC no guarda.</p>
@@ -333,32 +479,32 @@
 
         <div class="wcard">
           <div class="wviz">
-            <!-- Mini-mapa de nodos: verde = con hueco, rojo = saturado, gris = neutro -->
-            <svg viewBox="0 0 224 58" role="img" aria-label="Mapa de nodos: con hueco frente a saturados">
-              <g stroke="#D8DDD8" stroke-width="1.4">
+            <!-- Mini-mapa de nudos: verde = con hueco, rojo = saturado, gris = cerrado; ○220 kV / □400 kV -->
+            <svg viewBox="0 0 224 58" role="img" aria-label="Mapa de nudos: con hueco frente a saturados">
+              <g stroke="#D9E0EA" stroke-width="1.4">
                 <line x1="26" y1="17" x2="58" y2="39"/><line x1="58" y1="39" x2="110" y2="43"/>
                 <line x1="26" y1="17" x2="96" y2="14"/><line x1="96" y1="14" x2="150" y2="26"/>
                 <line x1="110" y1="43" x2="150" y2="26"/><line x1="150" y1="26" x2="198" y2="16"/>
                 <line x1="150" y1="26" x2="176" y2="45"/><line x1="58" y1="39" x2="138" y2="49"/>
               </g>
-              <!-- halos + nodos con hueco (verde, laten) -->
-              <circle cx="26" cy="17" r="9" fill="#0B9463" opacity=".14"/>
-              <circle cx="110" cy="43" r="9" fill="#0B9463" opacity=".14"/>
-              <circle cx="198" cy="16" r="9" fill="#0B9463" opacity=".14"/>
-              <circle class="n-on" cx="26" cy="17" r="5" fill="#0B9463" stroke="#fff" stroke-width="1.6"/>
-              <circle class="n-on" cx="110" cy="43" r="5" fill="#0B9463" stroke="#fff" stroke-width="1.6" style="animation-delay:.7s"/>
-              <circle class="n-on" cx="198" cy="16" r="5" fill="#0B9463" stroke="#fff" stroke-width="1.6" style="animation-delay:1.4s"/>
-              <!-- nodos saturados (rojo) -->
-              <circle cx="96" cy="14" r="4.6" fill="#C63C2C" stroke="#fff" stroke-width="1.6"/>
-              <circle cx="176" cy="45" r="4.6" fill="#C63C2C" stroke="#fff" stroke-width="1.6"/>
-              <!-- nodos neutros (gris) -->
-              <circle cx="58" cy="39" r="3.6" fill="#9AA69A" stroke="#fff" stroke-width="1.4"/>
-              <circle cx="150" cy="26" r="3.6" fill="#9AA69A" stroke="#fff" stroke-width="1.4"/>
-              <circle cx="138" cy="49" r="3.6" fill="#9AA69A" stroke="#fff" stroke-width="1.4"/>
+              <!-- anillos + nudos con hueco (verde) -->
+              <circle cx="26" cy="17" r="8.5" fill="none" stroke="#1F7A44" stroke-width="1.4" opacity=".35"/>
+              <circle cx="110" cy="43" r="8.5" fill="none" stroke="#1F7A44" stroke-width="1.4" opacity=".35"/>
+              <circle cx="198" cy="16" r="8.5" fill="none" stroke="#1F7A44" stroke-width="1.4" opacity=".35"/>
+              <circle class="n-on" cx="26" cy="17" r="5" fill="#1F7A44" stroke="#fff" stroke-width="1.6"/>
+              <circle class="n-on" cx="110" cy="43" r="5" fill="#1F7A44" stroke="#fff" stroke-width="1.6" style="animation-delay:.7s"/>
+              <circle class="n-on" cx="198" cy="16" r="5" fill="#1F7A44" stroke="#fff" stroke-width="1.6" style="animation-delay:1.4s"/>
+              <!-- nudos saturados (rojo); el cuadrado es 400 kV -->
+              <rect x="91.6" y="9.6" width="8.8" height="8.8" fill="#B3372A" stroke="#fff" stroke-width="1.6"/>
+              <circle cx="176" cy="45" r="4.6" fill="#B3372A" stroke="#fff" stroke-width="1.6"/>
+              <!-- nudos cerrados (gris) -->
+              <circle cx="58" cy="39" r="3.6" fill="#C2CAD6" stroke="#fff" stroke-width="1.4"/>
+              <rect x="146.5" y="22.5" width="7" height="7" fill="#C2CAD6" stroke="#fff" stroke-width="1.4"/>
+              <circle cx="138" cy="49" r="3.6" fill="#C2CAD6" stroke="#fff" stroke-width="1.4"/>
             </svg>
           </div>
           <div class="wbody">
-            <p class="tag">Contexto</p>
+            <p class="tag">Detalle C · Contexto</p>
             <h3>Dónde mirar</h3>
             <p>Regiones saturadas vs. con hueco, lectura del mes y los nodos con oportunidad.
                Para decidir dónde buscar suelo.</p>
@@ -387,32 +533,37 @@
 
       <!-- CTA de cierre: mismo formulario, en el punto natural de decisión -->
       <section class="signup closing" id="signup-end" aria-label="Suscripción al Radar de Capacidad">
-        <div class="rule"></div>
-        <h2>Empieza por saber dónde hay red</h2>
-        <p class="sub">Un correo al mes con la capacidad disponible nodo a nodo. Gratis y sin spam;
-          te llega cuando CNMC publica el periodo.</p>
-        <form class="js-radar-form" action="https://formspree.io/f/mqerydva" method="POST">
-          <div class="form-row">
-            <label for="email-end" class="mono" style="position:absolute;left:-9999px;">Email</label>
-            <input id="email-end" type="email" name="email" required autocomplete="email"
-                   placeholder="tu@empresa.com" inputmode="email">
-            <button type="submit">Suscribirme</button>
-          </div>
-          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
-                 style="position:absolute;left:-9999px;" aria-hidden="true">
-          <input type="hidden" name="_subject" value="Nueva alta — Radar de Capacidad">
-          <div class="fineprint">
-            <span class="k"><i></i> Sin spam</span>
-            <span class="k"><i></i> Baja cuando quieras</span>
-            <span class="k"><i></i> Tu email no se comparte</span>
-          </div>
-        </form>
-        <p class="form-msg" role="status" aria-live="polite"></p>
+        <div class="sg-strip">
+          <span class="sg-tag">Suscripción</span>
+          <span class="sg-meta">1 email / mes · gratis</span>
+        </div>
+        <div class="sg-body">
+          <h2>Empieza por saber dónde hay red</h2>
+          <p class="sub">Un correo al mes con la capacidad disponible nodo a nodo. Gratis y sin spam;
+            te llega cuando CNMC publica el periodo.</p>
+          <form class="js-radar-form" action="https://formspree.io/f/mqerydva" method="POST">
+            <div class="form-row">
+              <label for="email-end" style="position:absolute;left:-9999px;">Email</label>
+              <input id="email-end" type="email" name="email" required autocomplete="email"
+                     placeholder="tu@empresa.com" inputmode="email">
+              <button type="submit">Suscribirme</button>
+            </div>
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
+                   style="position:absolute;left:-9999px;" aria-hidden="true">
+            <input type="hidden" name="_subject" value="Nueva alta — Radar de Capacidad">
+            <div class="fineprint">
+              <span class="k">Sin spam</span>
+              <span class="k">Baja cuando quieras</span>
+              <span class="k">Tu email no se comparte</span>
+            </div>
+          </form>
+          <p class="form-msg" role="status" aria-live="polite"></p>
+        </div>
       </section>
     </section>
 
     <footer>
-      <span>NudoRed · Radar de Capacidad · Spanish Grid Capacity Intelligence</span>
+      <span>NudoRed · Radar de Capacidad · Inteligencia de la red eléctrica española</span>
       <span>Fuente: CNMC · <span id="year"></span></span>
     </footer>
 
@@ -427,9 +578,9 @@
       </div>
       <div class="ex-body">
         <img src="teaser-portada.png" width="1736" height="874" loading="lazy"
-             alt="Portada del Radar de junio: «Aragón, agotada. Extremadura, abierta», con medidores de capacidad por comunidad">
+             alt="Portada del Radar de junio: «Madrid y Aragón, agotadas. Cataluña, al límite. Extremadura, abierta», con fichas de capacidad por comunidad">
         <img src="teaser-mapas.png" width="1736" height="1141" loading="lazy"
-             alt="Mapas del Radar: nudos de la red de transporte de Aragón y Extremadura, coloreados por capacidad y dimensionados por MW disponibles">
+             alt="Mapas del Radar: nudos de la red de transporte de Aragón, Extremadura, Madrid y Cataluña, coloreados por capacidad y dimensionados por MW disponibles">
       </div>
       <div class="ex-foot">
         <p class="note">Es un extracto de junio. Cada mes recibes la edición completa por email.</p>
@@ -499,273 +650,6 @@
     var yr = document.getElementById('year');
     if(yr) yr.textContent = new Date().getFullYear();
   })();
-</script>
-
-<!-- ============ Fondo 3D: red viva de nodos de capacidad (Three.js vía importmap) ============ -->
-<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
-<script type="module">
-/*
-  Red eléctrica viva: nodos (subestaciones) unidos por líneas. Nodo verde = con hueco
-  (energizado, respira); nodos apagados = saturados. Pulsos ocasionales = corriente.
-  Profundidad real con PerspectiveCamera + niebla en el color de fondo.
-  Sin postprocesado: el glow son sprites additive con una textura radial suave.
-  Todo envuelto en try/catch + detección de WebGL: si algo falla, la banda queda limpia.
-*/
-(async function(){
-  "use strict";
-  const canvas = document.getElementById('grid-canvas');
-  const band   = document.querySelector('.band');
-  if(!canvas || !band) return;
-
-  // --- Detección de WebGL: si no hay, no tocamos nada ---
-  function hasWebGL(){
-    try{
-      const c = document.createElement('canvas');
-      return !!(window.WebGLRenderingContext &&
-        (c.getContext('webgl') || c.getContext('experimental-webgl')));
-    }catch(e){ return false; }
-  }
-  if(!hasWebGL()) return;
-
-  let THREE;
-  try{
-    THREE = await import('three');
-  }catch(e){
-    // El CDN no cargó: dejamos la banda oscura tal cual, sin lienzo roto.
-    return;
-  }
-
-  try{
-    const BG = 0x0D131C;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isNarrow = () => Math.min(window.innerWidth, band.clientWidth) <= 640;
-
-    // --- Renderer ---
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:'low-power' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setClearColor(BG, 1);
-
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(BG, 0.05);
-
-    let W = band.clientWidth  || window.innerWidth;
-    let H = band.clientHeight || 360;
-    const camera = new THREE.PerspectiveCamera(52, W/H, 0.1, 100);
-    camera.position.set(0, 0, isNarrow() ? 19 : 17);
-
-    // --- Textura radial suave (glow) compartida ---
-    function makeGlowTexture(){
-      const s = 128, cv = document.createElement('canvas'); cv.width = cv.height = s;
-      const ctx = cv.getContext('2d');
-      const g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
-      g.addColorStop(0.0, 'rgba(255,255,255,1)');
-      g.addColorStop(0.18,'rgba(255,255,255,0.85)');
-      g.addColorStop(0.45,'rgba(255,255,255,0.28)');
-      g.addColorStop(1.0, 'rgba(255,255,255,0)');
-      ctx.fillStyle = g; ctx.fillRect(0,0,s,s);
-      const tex = new THREE.CanvasTexture(cv);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      return tex;
-    }
-    const glow = makeGlowTexture();
-
-    // --- Grupo que gira/deriva ---
-    const group = new THREE.Group();
-    scene.add(group);
-
-    // --- Losa 3D de nodos que llena TODO el ancho visible de la banda ---
-    // Ancho visible a la profundidad de la losa: la red llega de borde a borde de la
-    // página (no solo detrás del texto). El nº de nodos escala para densidad constante.
-    const SLAB_Z = -2, SPAN_Z = 12;
-    const dist = camera.position.z - SLAB_Z;
-    const visH = 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-    const visW = visH * camera.aspect;
-    const fillMargin = isNarrow() ? 1.05 : 1.2;           // margen extra para cubrir bordes al rotar
-    const SPAN_X = Math.max(isNarrow() ? 15 : 24, visW * fillMargin);
-    const SPAN_Y = isNarrow() ? 13 : 11;
-    const DENSITY = 0.30;                                  // ~la densidad del diseño original (62/(22·9.5))
-    const NODE_COUNT = Math.max(isNarrow() ? 34 : 46,
-      Math.min(isNarrow() ? 46 : 210, Math.round(DENSITY * SPAN_X * SPAN_Y)));
-    const nodes = [];  // {pos, kind:'dim'|'green'|'amber', phase, base}
-    for(let i=0;i<NODE_COUNT;i++){
-      // ligero empuje hacia los bordes para que la red toque los laterales de la página
-      let x = (Math.random()*2-1);
-      x = Math.sign(x)*Math.pow(Math.abs(x),0.85);
-      const pos = new THREE.Vector3(
-        x * SPAN_X * 0.5,                                  // centrada (sin sesgo a la derecha)
-        (Math.random()*2-1) * SPAN_Y * 0.5,
-        (Math.random()*2-1) * SPAN_Z * 0.5 + SLAB_Z
-      );
-      nodes.push({ pos, kind:'dim', phase:Math.random()*Math.PI*2 });
-    }
-    // ~28% energizados verdes, 1-2 ámbar (vigilancia), el resto apagados
-    const idx = nodes.map((_,i)=>i);
-    for(let k=idx.length-1;k>0;k--){ const j=(Math.random()*(k+1))|0; [idx[k],idx[j]]=[idx[j],idx[k]]; }
-    const greenN = Math.min(40, Math.round(NODE_COUNT * 0.24));
-    const amberN = isNarrow() ? 1 : 2;
-    for(let i=0;i<greenN;i++) nodes[idx[i]].kind = 'green';
-    for(let i=greenN;i<greenN+amberN;i++) nodes[idx[i]].kind = 'amber';
-
-    // --- Aristas: unir solo nodos cercanos (grafo de red), con tope por nodo ---
-    const edges = [];
-    const THRESH = 6.4, MAX_DEG = 4;
-    const deg = new Array(NODE_COUNT).fill(0);
-    const cand = [];
-    for(let i=0;i<NODE_COUNT;i++)
-      for(let j=i+1;j<NODE_COUNT;j++){
-        const d = nodes[i].pos.distanceTo(nodes[j].pos);
-        if(d < THRESH) cand.push({i,j,d});
-      }
-    cand.sort((a,b)=>a.d-b.d);
-    for(const c of cand){
-      if(deg[c.i]>=MAX_DEG || deg[c.j]>=MAX_DEG) continue;
-      edges.push([c.i,c.j]); deg[c.i]++; deg[c.j]++;
-    }
-    // asegurar que ningún nodo quede totalmente suelto (une al más cercano)
-    for(let i=0;i<NODE_COUNT;i++){
-      if(deg[i]>0) continue;
-      let best=-1, bd=1e9;
-      for(let j=0;j<NODE_COUNT;j++){ if(j===i) continue;
-        const d=nodes[i].pos.distanceTo(nodes[j].pos); if(d<bd){bd=d;best=j;} }
-      if(best>=0){ edges.push([i,best]); deg[i]++; deg[best]++; }
-    }
-
-    // --- Líneas de la red (tenues, blancas) ---
-    const lineGeom = new THREE.BufferGeometry();
-    const lp = new Float32Array(edges.length*6);
-    for(let e=0;e<edges.length;e++){
-      const a=nodes[edges[e][0]].pos, b=nodes[edges[e][1]].pos;
-      lp.set([a.x,a.y,a.z, b.x,b.y,b.z], e*6);
-    }
-    lineGeom.setAttribute('position', new THREE.BufferAttribute(lp,3));
-    const lineMat = new THREE.LineBasicMaterial({ color:0xC9D2D8, transparent:true, opacity:0.13, depthWrite:false });
-    group.add(new THREE.LineSegments(lineGeom, lineMat));
-
-    // --- Nodos apagados (Points, baratos) ---
-    const dimNodes = nodes.filter(n=>n.kind==='dim');
-    const dp = new Float32Array(dimNodes.length*3);
-    dimNodes.forEach((n,i)=>{ dp.set([n.pos.x,n.pos.y,n.pos.z], i*3); });
-    const dimGeom = new THREE.BufferGeometry();
-    dimGeom.setAttribute('position', new THREE.BufferAttribute(dp,3));
-    const dimMat = new THREE.PointsMaterial({
-      size: 0.9, map: glow, color: 0x9AA6B0, transparent:true, opacity:0.55,
-      sizeAttenuation:true, depthWrite:false, blending:THREE.NormalBlending
-    });
-    group.add(new THREE.Points(dimGeom, dimMat));
-
-    // --- Nodos energizados (sprites additive individuales: cada uno respira) ---
-    const pulsers = [];
-    function addSprite(n, colorHex, baseScale, opacity){
-      const mat = new THREE.SpriteMaterial({
-        map: glow, color: colorHex, transparent:true, opacity,
-        blending: THREE.AdditiveBlending, depthWrite:false
-      });
-      const sp = new THREE.Sprite(mat);
-      sp.position.copy(n.pos);
-      sp.scale.setScalar(baseScale);
-      group.add(sp);
-      pulsers.push({ sp, mat, base:baseScale, phase:n.phase,
-        amp: colorHex===0x2FD08A ? 0.28 : 0.20, opBase:opacity });
-    }
-    nodes.forEach(n=>{
-      if(n.kind==='green') addSprite(n, 0x2FD08A, 1.6, 0.9);
-      else if(n.kind==='amber') addSprite(n, 0xE7A93B, 1.35, 0.8);
-    });
-
-    // --- Pulsos de energía viajando por aristas (corriente) ---
-    const PULSE_N = isNarrow() ? 3 : 6;
-    const pulses = [];
-    function newPulse(){
-      const e = edges[(Math.random()*edges.length)|0];
-      return { a:nodes[e[0]].pos, b:nodes[e[1]].pos, t:0,
-        speed: 0.28 + Math.random()*0.30, delay: Math.random()*4.5, active:false };
-    }
-    for(let i=0;i<PULSE_N;i++){
-      const p = newPulse();
-      const mat = new THREE.SpriteMaterial({ map:glow, color:0x8FF0C4, transparent:true,
-        opacity:0, blending:THREE.AdditiveBlending, depthWrite:false });
-      const sp = new THREE.Sprite(mat); sp.scale.setScalar(0.7); group.add(sp);
-      p.sp = sp; p.mat = mat; pulses.push(p);
-    }
-
-    // --- Puntero (parallax) ---
-    const pointer = { x:0, y:0, tx:0, ty:0, enabled: !reduceMotion && !isNarrow() && !matchMedia('(pointer:coarse)').matches };
-    if(pointer.enabled){
-      window.addEventListener('pointermove', (ev)=>{
-        pointer.tx = (ev.clientX / window.innerWidth  - 0.5) * 2;
-        pointer.ty = (ev.clientY / window.innerHeight - 0.5) * 2;
-      }, { passive:true });
-    }
-
-    // --- Resize ---
-    function resize(){
-      W = band.clientWidth || window.innerWidth;
-      H = band.clientHeight || 360;
-      renderer.setSize(W, H, false);
-      camera.aspect = W/H; camera.updateProjectionMatrix();
-    }
-    resize();
-    window.addEventListener('resize', resize, { passive:true });
-
-    // --- Bucle ---
-    const clock = new THREE.Clock();
-    let running = false, rafId = 0;
-
-    function frame(dt, t){
-      // deriva continua muy lenta + parallax suavizado hacia el puntero
-      group.rotation.y = t*0.035 + pointer.x*0.16;
-      group.rotation.x = Math.sin(t*0.08)*0.05 + pointer.y*0.10;
-      if(pointer.enabled){
-        pointer.x += (pointer.tx - pointer.x) * Math.min(dt*2.2, 1);
-        pointer.y += (pointer.ty - pointer.y) * Math.min(dt*2.2, 1);
-      }
-      // respiración de los nodos energizados
-      for(const p of pulsers){
-        const s = 1 + Math.sin(t*0.9 + p.phase) * p.amp;
-        p.sp.scale.setScalar(p.base * s);
-        p.mat.opacity = p.opBase * (0.72 + 0.28*(0.5+0.5*Math.sin(t*0.9+p.phase)));
-      }
-      // corriente por las aristas
-      for(const p of pulses){
-        if(!p.active){ p.delay -= dt; if(p.delay<=0){ p.active=true; p.t=0; } else { p.mat.opacity=0; continue; } }
-        p.t += dt * p.speed;
-        if(p.t>=1){ Object.assign(p, newPulse()); p.mat.opacity=0; continue; }
-        p.sp.position.lerpVectors(p.a, p.b, p.t);
-        p.mat.opacity = Math.sin(Math.PI*p.t) * 0.9;
-      }
-      renderer.render(scene, camera);
-    }
-
-    function loop(){
-      rafId = requestAnimationFrame(loop);
-      const dt = Math.min(clock.getDelta(), 0.05);
-      frame(dt, clock.elapsedTime);
-    }
-    function start(){ if(running||reduceMotion) return; running=true; clock.start(); loop(); }
-    function stop(){ running=false; if(rafId) cancelAnimationFrame(rafId); rafId=0; }
-
-    // Movimiento reducido: un único fotograma estático, calmado.
-    if(reduceMotion){
-      // coloca respiración/pulsos en un estado neutro y renderiza una vez
-      for(const p of pulsers){ p.sp.scale.setScalar(p.base); }
-      for(const p of pulses){ p.mat.opacity = 0; }
-      renderer.render(scene, camera);
-    } else {
-      // Pausa cuando la pestaña se oculta o la banda sale de vista.
-      let visible = true, onscreen = true;
-      const sync = ()=>{ (visible && onscreen) ? start() : stop(); };
-      document.addEventListener('visibilitychange', ()=>{ visible = !document.hidden; sync(); });
-      if('IntersectionObserver' in window){
-        new IntersectionObserver((ents)=>{ onscreen = ents[0].isIntersecting; sync(); },
-          { threshold:0 }).observe(band);
-      }
-      sync();
-    }
-  }catch(e){
-    // Cualquier fallo del render: limpiamos el lienzo y dejamos la banda oscura intacta.
-    try{ canvas.style.display = 'none'; }catch(_){}
-  }
-})();
 </script>
 </body>
 </html>
