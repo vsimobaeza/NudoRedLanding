@@ -30,6 +30,11 @@
      va en 600 y los rótulos en 500 — el peso 700 saturaba la página. Mono conserva 700 porque
      ahí lo pide el énfasis de dato. -->
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<!-- Archivo SOLO para el wordmark: es la letra histórica de la marca y se conserva aunque el
+     resto del sistema haya cambiado de tipografía. Va en peticion aparte porque `text=`
+     subconjuntaria todas las familias del enlace; asi solo baja las 6 letras de "NudoRed"
+     (~1 KB) con los ejes de peso y anchura, que es lo que da el ancho 122% del logo. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&text=NudoRed&display=swap" rel="stylesheet">
 
 <style>
   /* ============ Sistema v2 «La Lámina» (docs/sistema-diseno.md) ============ */
@@ -48,6 +53,7 @@
     --closed:#9AA3B2;
     /* tipografía */
     --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+    --wordmark:"Archivo","Segoe UI",-apple-system,Arial,sans-serif;
     --sans:"IBM Plex Sans","Segoe UI",-apple-system,Arial,sans-serif;
     --mono:"IBM Plex Mono","Cascadia Code",Consolas,ui-monospace,monospace;
   }
@@ -103,8 +109,11 @@
   .logo-mark .edge{stroke:var(--ink);stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round;fill:none;}
   .logo-mark .node{fill:var(--ink);}
   .logo-mark .node.on{fill:var(--brand);}
-  .wordmark{font-family:var(--display);font-weight:600;font-size:23px;line-height:1;letter-spacing:.01em;}
-  .wordmark b{color:var(--brand);font-weight:600;}
+  /* El wordmark mantiene la Archivo ancha de siempre: es la firma de la marca y la unica
+     pieza que sobrevive al cambio de tipografia. El resto de la pagina va en Barlow/Plex. */
+  .wordmark{font-family:var(--wordmark);font-weight:800;font-stretch:122%;
+    font-size:21px;line-height:1;letter-spacing:-.01em;}
+  .wordmark b{color:var(--brand);font-weight:800;}
   .cj-field{border-left:1px solid var(--hair);padding:8px 16px;display:flex;flex-direction:column;justify-content:center;gap:3px;}
   .cj-k{font-family:var(--display);font-weight:500;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);}
   .cj-v{font-family:var(--display);font-weight:500;font-size:14.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink);white-space:nowrap;}
@@ -174,20 +183,26 @@
   .signup p.sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px;max-width:none;text-wrap:pretty;}
   .form-row{display:flex;gap:10px;flex-wrap:wrap;}
   .form-row input[type=email]{
-    flex:1 1 240px;min-width:0;font-family:var(--sans);font-size:15px;color:var(--ink);
-    padding:12px 14px;border:1px solid #B6C0CF;border-radius:0;background:#fff;
+    /* 16px NO es capricho: por debajo de eso iOS hace zoom automatico al enfocar el campo
+       y descoloca la pagina entera. Es el minimo en cualquier input de una web movil. */
+    flex:1 1 240px;min-width:0;font-family:var(--sans);font-size:16px;color:var(--ink);
+    padding:12px 14px;border:1px solid #B6C0CF;border-radius:0;background:#fff;min-height:48px;
   }
   .form-row input[type=email]::placeholder{color:#6B7488;}
   .form-row button{
     font-family:var(--sans);font-weight:600;font-size:14.5px;letter-spacing:.01em;color:#fff;
     background:var(--brand);border:1px solid var(--brand);border-radius:0;padding:12px 24px;cursor:pointer;
-    transition:background .15s ease,border-color .15s ease;
+    min-height:48px;transition:background .15s ease,border-color .15s ease;
   }
   .form-row button:hover{background:var(--brand-deep);border-color:var(--brand-deep);}
   .form-row button:disabled{opacity:.55;cursor:progress;}
   .fineprint{margin:14px 0 0;display:flex;flex-wrap:wrap;gap:4px 0;font-size:12px;color:var(--ink-soft);}
   .fineprint .k{padding-right:14px;}
-  .fineprint .k + .k{border-left:1px solid var(--hair);padding-left:14px;}
+  /* El separador es un pseudo-elemento y no un `border-left`: al envolverse en movil, el
+     borde quedaba colgando al principio de la segunda linea como un palo suelto. */
+  .fineprint .k + .k{padding-left:14px;position:relative;}
+  .fineprint .k + .k::before{content:"";position:absolute;left:0;top:.15em;bottom:.15em;
+    width:1px;background:var(--hair);}
   .form-msg{margin:14px 0 0;font-size:13.5px;line-height:1.5;display:none;}
   .form-msg.ok{display:block;color:var(--ok);font-weight:600;}
   .form-msg.err{display:block;color:var(--bad);font-weight:600;}
@@ -232,7 +247,8 @@
   /* ============ credibilidad / cierre ============ */
   .see-example{margin-top:22px;text-align:center;}
   .see-example button{font-family:var(--sans);font-weight:600;font-size:14px;color:var(--brand-deep);
-    background:none;border:0;cursor:pointer;padding:6px 2px;border-bottom:1px solid transparent;transition:border-color .18s ease;}
+    background:none;border:0;cursor:pointer;padding:12px 8px;min-height:44px;
+    border-bottom:1px solid transparent;transition:border-color .18s ease;}
   .see-example button:hover{border-bottom-color:var(--brand-deep);}
   .see-example .arw{display:inline-block;transition:transform .18s ease;}
   .see-example button:hover .arw{transform:translateX(3px);}
@@ -260,9 +276,13 @@
   .ex-head h3{margin:0;font-size:15px;font-weight:600;letter-spacing:-.005em;}
   .ex-head .ex-sub{margin:2px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-soft);text-transform:uppercase;}
   .ex-close{font-family:var(--sans);font-size:15px;color:var(--ink-soft);background:none;border:1px solid var(--hair);
-    width:32px;height:32px;cursor:pointer;line-height:1;flex:none;}
+    width:44px;height:44px;cursor:pointer;line-height:1;flex:none;}
   .ex-close:hover{background:var(--track);color:var(--ink);}
   .ex-body{overflow:auto;max-height:calc(90vh - 136px);background:var(--track);}
+  .ex-hint{margin:0;padding:8px 16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--ink-soft);background:var(--panel);
+    border-bottom:1px solid var(--hair);}
+  .ex-shot{display:block;}
   .ex-body img{display:block;width:100%;height:auto;border-bottom:1px solid var(--hair);}
   .ex-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 16px;border-top:1px solid var(--hair);flex-wrap:wrap;}
   .ex-foot .note{margin:0;font-size:12.5px;color:var(--ink-soft);}
@@ -277,10 +297,37 @@
   footer a:hover{color:var(--ink);}
 
   /* ============ móvil ============ */
+  /* La mayoría del tráfico llega desde LinkedIn, o sea desde un teléfono: el movil no es
+     una adaptación del escritorio, es el caso principal. */
   @media (max-width:680px){
     .whats{grid-template-columns:1fr;}
     .cj-per{display:none;}
+
+    /* La prosa deja de justificarse. El justificado necesita ~45 caracteres por línea para
+       repartir el sobrante; a 40 o menos abre huecos enormes entre palabras («acceso
+       disponible nodo a nodo» ocupaba una línea entera estirada). Y no hay guionado que lo
+       salve: está comprobado que el motor no aplica `hyphens:auto` de forma fiable. */
+    .hero-copy .lede,
+    .signup p.sub,
+    .wcard p,
+    .statcap,
+    .trust,
+    .ex-foot .note{text-align:left;}
+
+    /* Sin separadores en la letra pequeña: al envolverse, el de la línea siguiente queda
+       colgando al principio como un palo suelto. La separación la da el espaciado. */
+    .fineprint{gap:4px 18px;}
+    .fineprint .k{padding-right:0;}
+    .fineprint .k + .k{padding-left:0;}
+    .fineprint .k + .k::before{display:none;}
+
+    /* Diálogo del ejemplo a pantalla casi completa: cada píxel cuenta para leer un informe. */
+    dialog.example{width:calc(100% - 16px);max-height:94vh;}
+    .ex-body{max-height:calc(94vh - 190px);}
+    .ex-foot{gap:10px;}
+    .ex-foot a{flex:1 1 auto;text-align:center;padding:13px 18px;}
   }
+
   @media (max-width:460px){
     .cj-src{display:none;}
     .hero-copy{padding:24px 18px 6px;}
@@ -288,7 +335,30 @@
     .uni-legend .note{margin-left:0;flex-basis:100%;}
     .sheet-facts{padding:11px 18px 13px;gap:5px 16px;font-size:12px;}
     .sg-body{padding:18px 16px;}
-    .form-row button{flex:1 1 auto;}
+    .form-row{gap:8px;}
+    .form-row button{flex:1 1 100%;}
+
+    /* El unifilar respira menos: en vertical el espacio es el recurso escaso y ese hueco
+       en blanco alejaba el formulario de la primera pantalla. */
+    .uni{margin-top:6px;}
+    .uni-svg{margin-bottom:-6px;}
+
+    /* Titular y marca, un punto más contenidos para que quepan sin partirse raro. */
+    .wordmark{font-size:19px;}
+    .cj-brand{padding:11px 18px;}
+    .signup h2{font-size:23px;}
+    .statnum{font-size:44px;}
+    .statden{font-size:24px;}
+
+    /* Márgenes laterales más ajustados: a 390px, 24px por lado se comen el 12% del ancho. */
+    .doc{padding:0 16px;}
+  }
+
+  /* Sin resaltado azul al tocar: lo sustituyen los estados propios de foco y :active. */
+  @media (hover:none){
+    a,button{-webkit-tap-highlight-color:transparent;}
+    .form-row button:active{background:var(--brand-deep);}
+    .wcard:active{border-color:var(--ink);}
   }
 </style>
 </head>
@@ -577,10 +647,17 @@
         <button type="button" class="ex-close js-ex-close" aria-label="Cerrar">✕</button>
       </div>
       <div class="ex-body">
-        <img src="teaser-portada.png" width="1736" height="874" loading="lazy"
-             alt="Portada del Radar de junio: «Madrid y Aragón, agotadas. Cataluña, al límite. Extremadura, abierta», con fichas de capacidad por comunidad">
-        <img src="teaser-mapas.png" width="1736" height="1141" loading="lazy"
-             alt="Mapas del Radar: nudos de la red de transporte de Aragón, Extremadura, Madrid y Cataluña, coloreados por capacidad y dimensionados por MW disponibles">
+        <!-- Enlace a la imagen suelta: en un movil el extracto encogido a 350px es ilegible,
+             y abrirlo aparte da el visor nativo con zoom y desplazamiento. -->
+        <p class="ex-hint">Pulsa una imagen para verla a tamaño completo</p>
+        <a class="ex-shot" href="teaser-portada.png" target="_blank" rel="noopener">
+          <img src="teaser-portada.png" width="1736" height="874" loading="lazy"
+               alt="Portada del Radar de junio: «Madrid y Aragón, agotadas. Cataluña, al límite. Extremadura, abierta», con fichas de capacidad por comunidad">
+        </a>
+        <a class="ex-shot" href="teaser-mapas.png" target="_blank" rel="noopener">
+          <img src="teaser-mapas.png" width="1736" height="1141" loading="lazy"
+               alt="Mapas del Radar: nudos de la red de transporte de Aragón, Extremadura, Madrid y Cataluña, coloreados por capacidad y dimensionados por MW disponibles">
+        </a>
       </div>
       <div class="ex-foot">
         <p class="note">Es un extracto de junio. Cada mes recibes la edición completa por email.</p>
