@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Radar de Capacidad — Inteligencia de la red eléctrica española</title>
 <meta name="description" content="Informe mensual gratuito: dónde la red eléctrica española tiene capacidad de acceso disponible (CEP/CAD), nodo a nodo, y qué nodos liberan o pierden capacidad cada mes. Datos CNMC, curados.">
-<meta name="theme-color" content="#F6F8FB">
+<meta name="theme-color" content="#FFFFFF">
 
 <!-- Favicon: isotipo NudoRed (la N como red de nudos) sobre lámina de papel; nudo activo en cobalto -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23F6F8FB'/%3E%3Crect x='1.25' y='1.25' width='37.5' height='37.5' fill='none' stroke='%23141824' stroke-width='2.5'/%3E%3Cpath d='M11 30 V10 L29 30 V10' fill='none' stroke='%23141824' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='11' cy='30' r='3' fill='%23141824'/%3E%3Ccircle cx='11' cy='10' r='3' fill='%23141824'/%3E%3Ccircle cx='29' cy='30' r='3' fill='%23141824'/%3E%3Ccircle cx='29' cy='10' r='4' fill='%231B3FD8'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23FFFFFF'/%3E%3Crect x='1.25' y='1.25' width='37.5' height='37.5' fill='none' stroke='%23101522' stroke-width='2.5'/%3E%3Cpath d='M11 30 V10 L29 30 V10' fill='none' stroke='%23101522' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='11' cy='30' r='3' fill='%23101522'/%3E%3Ccircle cx='11' cy='10' r='3' fill='%23101522'/%3E%3Ccircle cx='29' cy='30' r='3' fill='%23101522'/%3E%3Ccircle cx='29' cy='10' r='4' fill='%231B3FD8'/%3E%3C/svg%3E">
 
 <!-- Open Graph: así el enlace en LinkedIn muestra tarjeta -->
 <meta property="og:type" content="website">
@@ -24,173 +24,304 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="index,follow">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Pesos deliberadamente ligeros (2026-08-10): sin 700 en Barlow ni en Plex Sans. El titular
-     va en 600 y los rótulos en 500 — el peso 700 saturaba la página. Mono conserva 700 porque
-     ahí lo pide el énfasis de dato. -->
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-<!-- Archivo SOLO para el wordmark: es la letra histórica de la marca y se conserva aunque el
-     resto del sistema haya cambiado de tipografía. Va en peticion aparte porque `text=`
-     subconjuntaria todas las familias del enlace; asi solo baja las 6 letras de "NudoRed"
-     (~1 KB) con los ejes de peso y anchura, que es lo que da el ancho 122% del logo. -->
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&text=NudoRed&display=swap" rel="stylesheet">
+<!-- Las fuentes se sirven DESDE EL PROPIO SITIO, igual que en el informe: nada de CDN de Google
+     (lo prohíbe el sistema, docs/producto.md §9) y así no hay terceros ni RGPD que gestionar.
+     `captacion/fuentes/` viaja junto al HTML al desplegar. Son los MISMOS ficheros que
+     `informes/fuentes/`; `npm run diseno` comprueba que no se separen. -->
+<link rel="preload" as="font" type="font/woff2" href="fuentes/satoshi-300-900.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fuentes/cabinet-grotesk-100-900.woff2" crossorigin>
 
 <style>
-  /* ============ Sistema v2 «La Lámina» (docs/sistema-diseno.md) ============ */
+  /* Cabinet Grotesk — títulos (Bold 700) y subtítulos (Light 300). Sustituto libre de Nohemi. */
+  @font-face{font-family:'Cabinet Grotesk';src:url(fuentes/cabinet-grotesk-100-900.woff2);font-weight:100 900;font-display:swap;font-style:normal;}
+  /* Satoshi — cuerpo, rótulos, UI y rótulos de gráfico. */
+  @font-face{font-family:'Satoshi';src:url(fuentes/satoshi-300-900.woff2);font-weight:300 900;font-display:swap;font-style:normal;}
+  /* IBM Plex Mono — SOLO datos: cifras, unidades, metadatos. */
+  @font-face{font-family:'IBM Plex Mono';src:url(fuentes/ibm-plex-mono-400.woff2);font-weight:400;font-display:swap;font-style:normal;}
+  @font-face{font-family:'IBM Plex Mono';src:url(fuentes/ibm-plex-mono-500.woff2);font-weight:500;font-display:swap;font-style:normal;}
+  /* Barlow Condensed — SOLO el wordmark del logo. No usar en la página. */
+  @font-face{font-family:'Barlow Condensed';src:url(fuentes/barlow-condensed-700.woff2);font-weight:700;font-display:swap;font-style:normal;}
+</style>
+
+<style>
+  /* ============ Sistema v2 «La Lámina» (docs/producto.md §9) ============ */
+  /* TOKENS:INICIO — volcado desde el informe por 'npm run diseno -- --aplicar'. NO EDITAR A MANO.
+     La autoridad es informes/plantillas/informe.plantilla.html. Lo propio de esta
+     superficie va DESPUÉS de este bloque. */
   :root{
-    /* superficie */
-    --ink:#141824; --ink-soft:#4A5468;
-    --paper:#F6F8FB; --panel:#FFFFFF;
-    --hair:#D9E0EA; --track:#EBEFF5;
-    /* marca — solo estructura, rótulos, enlaces, logo, unifilar */
-    --brand:#1B3FD8; --brand-deep:#122E9E; --brand-wash:#E9EEFB;
-    --brand-grid:rgba(27,63,216,.08);
-    /* estados de dato — solo datos, nunca marca */
-    --ok:#1F7A44; --ok-wash:#E4F1E7;
-    --warn:#A16A05; --warn-wash:#F6EDD8;
-    --bad:#B3372A; --bad-wash:#F7E7E3;
+    --paper:#FFFFFF;
+    --tinte:#F4F7FB;
+    --panel:#FFFFFF;
+    --ink:#101522;
+    --ink-soft:#5A6478;
+    --ink-mute:#6B7488;
+    --hair:#E6EBF2;
+    --rule:#CBD4E0;
+    --track:#EDF1F6;
+    --brand:#1B3FD8;
+    --brand-deep:#122E9E;--ok:#1F7A44;
+    --ok-wash:#E8F2EB;
+    --warn:#A16A05;
+    --warn-wash:#FAF4E6;
+    --bad:#B3372A;
+    --bad-wash:#FAECE8;
     --closed:#9AA3B2;
-    /* tipografía */
-    --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
-    --wordmark:"Archivo","Segoe UI",-apple-system,Arial,sans-serif;
-    --sans:"IBM Plex Sans","Segoe UI",-apple-system,Arial,sans-serif;
+    --titulo:"Cabinet Grotesk","Segoe UI",-apple-system,Arial,sans-serif;
+    --subtitulo:"Cabinet Grotesk","Segoe UI",-apple-system,Arial,sans-serif;
+    --sans:"Satoshi","Segoe UI",-apple-system,Arial,sans-serif;
+    --cuerpo:"Satoshi","Segoe UI",-apple-system,Arial,sans-serif;
     --mono:"IBM Plex Mono","Cascadia Code",Consolas,ui-monospace,monospace;
+    --marca:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+    --w-titulo:700;
+    --w-subtitulo:300;
+    --w-fuerte:600;
+    --t-xs:10.5px;
+    --t-sm:11.5px;
+    --t-md:13px;
+    --t-base:15px;
+    --s1:4px;
+    --s2:8px;
+    --s3:14px;
+    --s4:22px;
+    --s5:34px;
+    --s6:56px;
+    --s7:88px;
+  }
+  /* TOKENS:FIN */
+
+  /* Derivados propios de la landing: no existen en el informe porque allí no hay milimetrado
+     ni banda de formulario. Se calculan DESDE los tokens de arriba, nunca en paralelo. */
+  :root{
+    --brand-wash:#E9EEFB;
   }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
   body{
     margin:0;background:var(--paper);color:var(--ink);
-    font-family:var(--sans);font-size:15px;line-height:1.55;
+    font-family:var(--cuerpo);font-size:var(--t-base);line-height:1.7;
     -webkit-font-smoothing:antialiased;
   }
   .doc{max-width:760px;margin:0 auto;padding:0 24px;}
   .mono{font-family:var(--mono);}
   .num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
-  h1,h2,h3{text-wrap:balance;}
-  /* El énfasis dentro del texto va en 600, nunca en 700: el negrita del navegador
-     resultaba demasiado denso en párrafos largos. */
-  b,strong{font-weight:600;}
+  /* Todo título es Cabinet Bold; el eje de contraste del sistema es el PESO, no la familia. */
+  h1,h2,h3{font-family:var(--titulo);font-weight:var(--w-titulo);text-wrap:balance;}
+  /* El énfasis dentro del texto va en 600, nunca en 700 ni en cursiva: no hay fichero itálico
+     cargado, así que un `font-style:italic` saldría sintetizado y se notaría. */
+  b,strong{font-weight:var(--w-fuerte);}
+  em{font-style:normal;font-weight:var(--w-fuerte);}
 
   /* ============ composición del texto de cuerpo ============ */
-  /* Mismo criterio que el informe (docs/sistema-diseno.md §2): la prosa va JUSTIFICADA y a
-     todo el ancho de su contenedor, con partido de palabras — sin `hyphens:auto` el
-     castellano justificado abre ríos de espacio. Depende de `<html lang="es">`.
-     Fuera: rótulos, cifras mono, leyendas y pies de dato, que van en bandera. */
+  /* ⚠️ LA PROSA VA EN BANDERA, NUNCA JUSTIFICADA (docs/producto.md §9). Hasta el 2026-08-23
+     esta hoja justificaba diciendo que seguía «el mismo criterio que el informe», y el informe
+     manda justo lo contrario: sin partido de palabras fiable el castellano justificado abre
+     ríos de espacio, y el partido no se puede dar por hecho. Bandera siempre.
+     El interlineado 1,7 del cuerpo es lo que compensa la medida larga. */
   .hero-copy .lede,
   .signup p.sub,
   .wcard p,
   .statcap,
   .trust,
-  .ex-foot .note{
-    text-align:justify;
-    hyphens:auto;-webkit-hyphens:auto;
-    hyphenate-limit-chars:5 3 2;
-  }
+  .ex-foot .note{text-align:left;text-wrap:pretty;}
   a{color:var(--brand-deep);}
   ::selection{background:var(--brand-wash);color:var(--ink);}
   :focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
   @media (prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth;} }
 
   /* ============ hoja de lámina (hero) ============ */
-  .hero-zone{padding-top:26px;}
-  .sheet{
-    background-color:var(--panel);border:1px solid var(--ink);
-    background-image:
-      linear-gradient(var(--brand-grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--brand-grid) 1px, transparent 1px);
-    background-size:8px 8px;
+  /* ⚠️ UN SOLO EJE PARA TODA LA PÁGINA. El hero llegó a estar a 1040px mientras el resto de la
+     página iba a 760: con las cajas puestas, ese salto se leía como «pliego ancho + columna de
+     lectura», pero al quitarlas se lee como un descuadre — no hay borde que lo explique y los
+     bordes izquierdos bailan 140px. Todo comparte contenedor: las cosas se alinean solas, que
+     es justo lo que hace que el conjunto parezca uno.
+     El hero sigue a dos columnas —titular y mapa— porque con el mapa debajo del titular el
+     formulario caía fuera del primer pantallazo, y capturar el email es el único trabajo de
+     esta página. */
+  .hero-zone{padding-top:var(--s4);}
+  @media (min-width:820px){
+    .sheet{display:grid;grid-template-columns:1.18fr .82fr;align-items:center;column-gap:var(--s5);}
+    .cajetin,.sheet-facts{grid-column:1 / -1;}
+    .hero-copy{padding:var(--s6) 0;}
+    .uni{margin:0;padding:0;}
+    /* En dos columnas el titular tiene ~430px: el techo de 58px parte «española» en un renglón
+       casi vacío. 50 es el máximo que deja la primera línea entera. */
+    .hero-copy h1{font-size:clamp(34px,5.2vw,50px);}
+    /* La leyenda vive bajo una columna de ~330px, no bajo la página entera: el `margin-left:auto`
+       de la nota la mandaba sola a una tercera línea. Aquí se apila limpia. */
+    .uni-legend{padding:var(--s2) 0 0;gap:3px 14px;}
+    .uni-legend .note{margin-left:0;}
   }
+  /* ⚠️ SIN CAJA Y SIN RETÍCULA (2026-08-23). La hoja tenía marco de tinta y papel milimetrado a
+     dos niveles. Fuera los dos: el criterio es el que el informe ya tenía escrito —«el aire hace
+     el trabajo que hacían los filetes, y el papel es el contenedor en vez de una caja por
+     bloque»— y la landing era la única superficie que no lo seguía. La retícula además nunca
+     existió en el informe, así que quitarla ACERCA las dos superficies en vez de separarlas.
+     El contenedor sigue existiendo para la maqueta; lo que desaparece es su dibujo. */
+  .sheet{background:none;}
 
   /* --- cajetín (title block) --- */
-  .cajetin{display:flex;align-items:stretch;border-bottom:1px solid var(--ink);background:var(--panel);}
-  .cj-brand{display:flex;align-items:center;gap:10px;padding:12px 16px;flex:1;min-width:0;}
+  /* El cajetín conserva UN filete inferior y nada más: es la línea de masthead que separa la
+     cabecera del documento, no una caja. Baja de tinta llena a `--rule` para que acompañe en
+     vez de encerrar. */
+  .cajetin{display:flex;align-items:stretch;border-bottom:1px solid var(--rule);background:none;}
+  .cj-brand{display:flex;align-items:center;gap:10px;padding:12px 0;flex:1;min-width:0;}
   .logo-mark{width:30px;height:30px;flex:none;}
   .logo-mark .edge{stroke:var(--ink);stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round;fill:none;}
   .logo-mark .node{fill:var(--ink);}
   .logo-mark .node.on{fill:var(--brand);}
-  /* El wordmark mantiene la Archivo ancha de siempre: es la firma de la marca y la unica
-     pieza que sobrevive al cambio de tipografia. El resto de la pagina va en Barlow/Plex. */
-  .wordmark{font-family:var(--wordmark);font-weight:800;font-stretch:122%;
-    font-size:21px;line-height:1;letter-spacing:-.01em;}
-  .wordmark b{color:var(--brand);font-weight:800;}
-  .cj-field{border-left:1px solid var(--hair);padding:8px 16px;display:flex;flex-direction:column;justify-content:center;gap:3px;}
-  .cj-k{font-family:var(--display);font-weight:500;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);}
-  .cj-v{font-family:var(--display);font-weight:500;font-size:14.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink);white-space:nowrap;}
-  .cj-doc .cj-v{color:var(--brand);}
+  /* Wordmark idéntico al del informe: Barlow Condensed 700 a 21px. Antes iba en Archivo con
+     `font-stretch:122%` — las dos cosas están prohibidas por el sistema, y además la marca no
+     puede tener una letra distinta en cada superficie. */
+  .wordmark{font-family:var(--marca);font-weight:700;font-size:21px;line-height:1;letter-spacing:.005em;}
+  .wordmark b{color:var(--brand);font-weight:700;}
+  /* Los campos ya no van en celdas: los separa el aire. Con el filete quitado hace falta más
+     hueco entre ellos o se leen como una sola columna de texto. */
+  .cj-field{padding:11px 0;margin-left:var(--s5);display:flex;flex-direction:column;justify-content:center;gap:4px;}
+  /* Los campos del cajetín son ROTULACIÓN de plano, no títulos: van en Satoshi. El único que
+     sube a Cabinet es el rótulo del documento, que sí encabeza la página. */
+  .cj-k{font-family:var(--sans);font-weight:500;font-size:var(--t-xs);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-mute);}
+  .cj-v{font-family:var(--sans);font-weight:var(--w-fuerte);font-size:var(--t-base);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;}
+  .cj-doc .cj-v{font-family:var(--titulo);font-weight:var(--w-titulo);font-size:17px;letter-spacing:-.015em;}
 
   /* --- titular sobre papel milimetrado --- */
-  .hero-copy{padding:34px 30px 8px;}
+  /* El fondo blanco explícito ya no hace falta: existía para que el subtítulo en Cabinet Light
+     300 no se lavara sobre el milimetrado, y el milimetrado se ha ido. Todo es papel. */
+  .hero-copy{padding:34px 0 18px;}
   .hero-copy h1{
-    font-family:var(--display);font-weight:600;
-    font-size:clamp(36px,8.5vw,58px);line-height:1.04;letter-spacing:.002em;
+    font-family:var(--titulo);font-weight:var(--w-titulo);
+    font-size:clamp(36px,8.5vw,58px);line-height:1.06;letter-spacing:-.02em;
     margin:0;
   }
-  .hero-copy h1 em{font-style:normal;color:var(--brand);}
-  .hero-copy .lede{font-size:16px;color:var(--ink-soft);margin:14px 0 0;line-height:1.6;max-width:none;text-wrap:pretty;}
+  /* «cada mes» va en COBALTO. Iba en magenta, que era el segundo color de marca del sistema —la
+     «voz», frente al cobalto que era «lo que dice CNMC»—. El 2026-08-23 el magenta se retiró de
+     TODAS las superficies por decisión de Víctor, así que ya no hay token de acento y la regla
+     de dos colores de marca queda fuera del sistema. Está en el historial de git por si se echa
+     de menos. La voz se distingue ahora por posición, peso y rótulo, no por color. */
+  .hero-copy h1 em{font-style:normal;font-weight:inherit;color:var(--brand);}
+  /* El subtítulo bajo un título es el ÚNICO sitio del Cabinet Light, aquí igual que en el
+     informe. A 17px: por debajo de 15px el trazo Light desaparece sobre papel blanco. */
+  .hero-copy .lede{font-family:var(--subtitulo);font-weight:var(--w-subtitulo);
+    font-size:17px;color:var(--ink-soft);margin:var(--s3) 0 0;line-height:1.6;letter-spacing:-.003em;}
   .hero-copy .lede b{font-weight:600;color:var(--ink);}
 
-  /* --- unifilar animado: la línea se dibuja y los nudos con hueco se encienden --- */
-  .uni{margin:30px 0 0;}
-  .uni-svg{display:block;width:100%;height:auto;}
-  .uni-svg .u-bus{stroke:var(--brand);stroke-width:2.4;fill:none;}
-  .uni-svg .u-stub{stroke:var(--brand);stroke-width:2;fill:none;}
-  .uni-svg .u-j{fill:var(--brand);}
-  .uni-svg .nd-ok{fill:var(--ok);stroke:#fff;stroke-width:2.5;}
-  .uni-svg .nd-halo{fill:none;stroke:var(--ok);stroke-width:1.5;opacity:.4;}
-  .uni-svg .nd-closed{fill:#C2CAD6;stroke:#fff;stroke-width:2.5;}
+  /* ============ el mapa: la red de transporte española, dato real ============ */
+  /* Sustituye al unifilar de 7 nudos que iba rotulado «esquema ilustrativo». Lo genera
+     `npm run fondo` desde normalizado/, así que se actualiza con el producto. */
+  .uni{margin:22px 0 0;position:relative;}
+  .fondo-mapa{display:block;width:100%;height:auto;overflow:visible;}
+  /* La tierra es un tinte casi imperceptible con el filete de comunidad encima: da la forma
+     de España sin competir con los nudos, que son el dato. */
+  .fm-ccaa{fill:var(--tinte);stroke:var(--rule);stroke-width:.5;stroke-linejoin:round;}
+  .fm-off{fill:var(--closed);opacity:.5;}
+  /* El nudo con capacidad es el único elemento saturado del mapa: es lo que se vende. */
+  .fm-on{fill:var(--ok);stroke:var(--panel);stroke-width:1;}
+  .fm-on.is-cerca{fill:var(--brand);stroke-width:1.4;}
+
+  /* Rótulo del nudo bajo el puntero. Mono porque son cifras, y en la caja del sistema. */
+  .fm-tip{
+    position:absolute;left:0;top:0;margin:0;pointer-events:none;opacity:0;
+    transform:translate(-50%,-140%);transition:opacity .12s ease-out;
+    background:var(--panel);border:1px solid var(--ink);padding:5px 9px;white-space:nowrap;
+    font-family:var(--mono);font-size:var(--t-xs);color:var(--ink);letter-spacing:.02em;z-index:2;
+  }
+  .fm-tip.on{opacity:1;}
+  .fm-tip b{color:var(--ok);font-weight:500;}
+
+  /* ⚠️ EL MOVIMIENTO NO OCULTA NADA. El mapa se ve entero sin JS y sin animación: el barrido
+     es un PULSO sobre lo ya visible, no una entrada. Si la animación no llega a correr —pestaña
+     en segundo plano, render sin JS, `prefers-reduced-motion`— el mapa sigue completo. Gatear
+     la visibilidad de un contenido en una transición es cómo se publican secciones en blanco. */
+  @media (prefers-reduced-motion:no-preference){
+    .fondo-mapa.barrido .fm-on{
+      transform-box:fill-box;transform-origin:center;
+      animation:fmPulso .9s cubic-bezier(.16,1,.3,1) both;
+    }
+    @keyframes fmPulso{
+      0%{transform:scale(1);}
+      30%{transform:scale(2.1);}
+      100%{transform:scale(1);}
+    }
+    /* Los nudos más grandes siguen respirando después del barrido: la página no se queda
+       muerta cuando acaba la entrada, que era el problema de la versión anterior. */
+    .fondo-mapa .fm-late{
+      transform-box:fill-box;transform-origin:center;
+      animation:fmLatido 5.5s ease-in-out infinite;
+    }
+    @keyframes fmLatido{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.28);opacity:.82;}}
+    .fm-on{transition:fill .14s ease-out;}
+  }
   .uni-legend{
     display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;
-    padding:10px 30px 0;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);
+    padding:var(--s2) 0 0;font-family:var(--mono);font-size:var(--t-xs);letter-spacing:.04em;color:var(--ink-mute);
   }
   .uni-legend .lg{display:inline-flex;align-items:center;gap:6px;}
   .uni-legend .lg svg{flex:none;}
-  .uni-legend .note{margin-left:auto;text-transform:uppercase;letter-spacing:.08em;font-size:9.5px;}
+  .uni-legend .note{margin-left:auto;text-transform:uppercase;letter-spacing:.08em;}
 
   /* --- fila de especificaciones (campos de cajetín inferiores) --- */
+  /* Un filete fino arriba y nada más: es la línea de pie del documento, el par de la del
+     cajetín. Sin caja y sin fondo — el papel ya es el contenedor. */
   .sheet-facts{
-    /* Fondo BLANCO, sin milimetrado: es la banda de especificaciones del cajetín, y en una
-       lámina real los campos rotulados van sobre papel limpio, no sobre la retícula.
-       `background` (atajo) es lo que corta el degradado que hereda de `.sheet`. */
-    background:var(--panel);
-    margin-top:18px;border-top:1px solid var(--hair);padding:12px 30px 14px;
-    display:flex;flex-wrap:wrap;gap:6px 24px;
-    font-family:var(--display);font-weight:500;font-size:13px;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--ink-soft);
+    margin-top:var(--s5);border-top:1px solid var(--hair);padding:var(--s3) 0 0;
+    display:flex;flex-wrap:wrap;gap:4px 26px;
+    font-family:var(--mono);font-size:var(--t-xs);letter-spacing:.01em;color:var(--ink-mute);
   }
-  .sheet-facts b{color:var(--ink);font-weight:600;}
+  .sheet-facts b{color:var(--ink-soft);font-weight:500;}
 
-  @media (prefers-reduced-motion:no-preference){
-    /* la línea se dibuja de izquierda a derecha; cada nudo aparece cuando la línea lo alcanza */
-    .u-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:uniDraw .3s linear both;}
-    .u-bus{animation-duration:1.25s;animation-delay:.12s;animation-timing-function:cubic-bezier(.3,0,.4,1);}
-    @keyframes uniDraw{to{stroke-dashoffset:0;}}
-    .u-node,.u-j{opacity:0;transform-box:fill-box;transform-origin:center;transform:scale(.5);
-      animation:uniPop .4s cubic-bezier(.2,.9,.3,1.3) both;}
-    @keyframes uniPop{to{opacity:1;transform:scale(1);}}
-    .nd-halo{animation:haloBreath 4s ease-in-out 2s infinite;transform-box:fill-box;transform-origin:center;}
-    @keyframes haloBreath{0%,100%{opacity:.4;transform:scale(1);}50%{opacity:.75;transform:scale(1.1);}}
+  /* (Aquí vivían las animaciones del unifilar ilustrativo —`.u-draw`, `.u-bus`, `.nd-halo`…—
+     que quedaron sin marcado al sustituirlo por el mapa real. Retiradas el 2026-08-23: eran
+     ~10 reglas y 3 keyframes que ya no tocaban nada.) */
+
+  /* ============ campo de suscripción ============ */
+  /* Sin caja, sin banda de color y sin recuadro: lo que sostiene el bloque es el AIRE de arriba
+     y de abajo, y los propios controles, que sí llevan trazo porque son accionables.
+     ⚠️ Con el borde fuera hay que subir el hueco o el formulario deja de leerse como una unidad
+     y se confunde con la prosa que tiene encima. Por eso var(--s7), no el margen de 26px que
+     tenía cuando el borde hacía ese trabajo. */
+  /* ⚠️ BANDA A TODO EL ANCHO. Las dos suscripciones viven dentro del contenedor de 760px, así
+     que el tinte se pinta con un `::before` que se sale 50vw por cada lado y lo recorta el
+     `overflow-x:clip` del body. Es lo que evita reestructurar el marcado: el segundo formulario
+     está anidado dentro de otra sección y sacarlo de ahí obligaba a partir dos <section>.
+     `clip` y no `hidden`: `hidden` crea un contenedor de scroll y rompería `position:sticky` y
+     el desplazamiento suave. `isolation:isolate` mantiene el `z-index:-1` dentro del bloque,
+     para que la capa quede detrás del formulario pero nunca detrás de la página.
+     El texto NO se sangra: sigue en el eje de la página, que es lo que mantiene todo alineado.
+     Solo cambia el fondo, que es justo el efecto buscado — destacar sin encajonar. */
+  .signup{
+    margin:var(--s7) 0;padding:var(--s6) 0;
+    background:var(--tinte);
+    /* La sombra se derrama a los lados sin ocupar sitio: NO cuenta como área de scroll, que es
+       justo el problema del `::before` con `inset:0 -50vw`. Medido: con el pseudo-elemento el
+       documento se iba a 569px de ancho en un móvil de 390 — barra de scroll horizontal — y
+       `overflow-x:clip` en el `body` NO lo arreglaba, porque el overflow del body se PROPAGA
+       al viewport y el body se queda en `visible`: no clipa nada.
+       El `clip-path` recorta arriba y abajo (si no, la sombra taparía media página) y deja
+       pasar los lados. */
+    box-shadow:0 0 0 100vmax var(--tinte);
+    clip-path:inset(0 -100vmax);
   }
-
-  /* ============ campo de suscripción (cajetín de formulario) ============ */
-  .signup{background:var(--panel);border:1px solid var(--ink);margin:26px 0 8px;}
-  .sg-strip{display:flex;justify-content:space-between;align-items:center;gap:12px;
-    padding:7px 16px;border-bottom:1px solid var(--hair);background:var(--brand-wash);}
-  .sg-tag{font-family:var(--display);font-weight:500;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-deep);}
-  .sg-meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--ink-soft);}
-  .sg-body{padding:20px 22px;}
-  .signup h2{font-family:var(--display);font-weight:600;font-size:27px;line-height:1.05;letter-spacing:.005em;margin:0 0 6px;}
-  .signup p.sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px;max-width:none;text-wrap:pretty;}
+  .sg-strip{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    padding:0 0 var(--s2);}
+  .sg-tag{font-family:var(--sans);font-weight:var(--w-fuerte);font-size:var(--t-xs);letter-spacing:.16em;text-transform:uppercase;color:var(--brand-deep);}
+  .sg-meta{font-family:var(--mono);font-size:var(--t-xs);letter-spacing:.05em;color:var(--ink-mute);}
+  .sg-body{padding:0;}
+  .signup h2{font-size:27px;line-height:1.08;letter-spacing:-.02em;margin:0 0 var(--s2);}
+  /* A 13px NO puede ir en Cabinet Light (el trazo desaparece): el subtítulo corto va en Satoshi. */
+  .signup p.sub{font-family:var(--cuerpo);color:var(--ink-soft);font-size:var(--t-md);line-height:1.6;margin:0 0 var(--s3);}
   .form-row{display:flex;gap:10px;flex-wrap:wrap;}
   .form-row input[type=email]{
     /* 16px NO es capricho: por debajo de eso iOS hace zoom automatico al enfocar el campo
        y descoloca la pagina entera. Es el minimo en cualquier input de una web movil. */
-    flex:1 1 240px;min-width:0;font-family:var(--sans);font-size:16px;color:var(--ink);
-    padding:12px 14px;border:1px solid #B6C0CF;border-radius:0;background:#fff;min-height:48px;
+    /* El borde va en --ink-mute y no en un gris claro: un control de formulario necesita 3:1
+       de contraste no textual (WCAG 1.4.11) y el #B6C0CF anterior daba 2,1:1 sobre blanco —
+       el campo se perdía. --ink-mute mide 4,69:1 y además encaja con el trazo de lámina. */
+    flex:1 1 240px;min-width:0;font-family:var(--cuerpo);font-size:16px;color:var(--ink);
+    padding:12px 14px;border:1px solid var(--ink-mute);border-radius:0;background:var(--panel);min-height:48px;
   }
-  .form-row input[type=email]::placeholder{color:#6B7488;}
+  /* El placeholder necesita los mismos 4,5:1 que el texto: --ink-mute los da. */
+  .form-row input[type=email]::placeholder{color:var(--ink-mute);opacity:1;}
   .form-row button{
-    font-family:var(--sans);font-weight:600;font-size:14.5px;letter-spacing:.01em;color:#fff;
+    font-family:var(--sans);font-weight:var(--w-fuerte);font-size:14.5px;letter-spacing:.01em;color:#fff;
     background:var(--brand);border:1px solid var(--brand);border-radius:0;padding:12px 24px;cursor:pointer;
     min-height:48px;transition:background .15s ease,border-color .15s ease;
   }
@@ -210,30 +341,47 @@
 
   /* ============ cabecera de sección: nudo sobre línea (unifilar) ============ */
   .section{padding:34px 0 6px;}
-  .sec-h{display:flex;align-items:center;gap:12px;margin:0 0 18px;}
-  .sec-h .sec-mark{flex:none;display:block;}
-  .sec-h .sec-mark line{stroke:var(--brand);stroke-width:1.5;}
-  .sec-h .sec-mark circle{fill:var(--brand);}
-  .sec-h h2{font-family:var(--display);font-weight:600;font-size:17.5px;letter-spacing:.07em;text-transform:uppercase;margin:0;line-height:1.1;}
-  .sec-fill{flex:1;height:0;border-top:1px solid var(--brand);}
-  .sec-note{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;}
+  /* Misma construcción que `.section-h` del informe, marca incluida: el nudo sobre el filete
+     es un `::before` de dos degradados, no un SVG suelto — así no hay un segundo dibujo que
+     mantener sincronizado.
+     ⚠️ ALINEACIÓN POR LÍNEA BASE, no por centro: con `center`, en cuanto el rótulo ocupa dos
+     líneas el filete se va a media altura del bloque y queda como un tachado. */
+  .sec-h{display:flex;align-items:baseline;gap:14px;margin:0 0 var(--s4);}
+  .sec-h::before{
+    content:"";order:0;flex:none;width:30px;height:10px;align-self:baseline;
+    background-image:
+      radial-gradient(circle, var(--brand) 0 3px, transparent 3.4px),
+      linear-gradient(var(--brand),var(--brand));
+    background-size:9px 9px, 100% 1.5px;
+    background-position:center, 0 50%;
+    background-repeat:no-repeat;
+  }
+  /* El rótulo NO encoge; el que cede es el filete. Con `0 1 auto` el h2 se comprime por debajo
+     de su ancho natural y parte en dos líneas aunque quepa entero. */
+  .sec-h h2{order:1;flex:0 0 auto;min-width:0;font-size:25px;letter-spacing:-.018em;margin:0;line-height:1.15;}
+  .sec-fill{order:2;flex:1 1 auto;height:0;border-top:1px solid var(--brand);}
+  .sec-note{order:3;font-family:var(--mono);font-size:var(--t-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);white-space:nowrap;}
 
   /* ============ detalles de lámina (qué recibes) ============ */
-  .whats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
-  .wcard{border:1px solid var(--hair);background:var(--panel);display:flex;flex-direction:column;
-    transition:border-color .18s ease;}
-  .wcard:hover{border-color:var(--ink);}
-  .wviz{padding:14px 14px 10px;border-bottom:1px solid var(--hair);background-color:var(--panel);
-    background-image:
-      linear-gradient(var(--brand-grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--brand-grid) 1px, transparent 1px);
-    background-size:8px 8px;}
+  .whats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s6) var(--s5);}
+  /* Ni caja ni retícula: tres columnas de contenido sueltas sobre el papel. Lo que las agrupa
+     es la rejilla y el hueco, no un marco.
+     El hover ya no puede ser el borde —no hay—, así que pasa al gráfico, que es lo que de
+     verdad se quiere mirar: sube un punto y se aviva. */
+  .wcard{display:flex;flex-direction:column;}
+  .wviz{padding:0 0 var(--s3);transition:transform .22s cubic-bezier(.16,1,.3,1);}
+  .wcard:hover .wviz{transform:translateY(-3px);}
+  @media (prefers-reduced-motion:reduce){ .wcard:hover .wviz{transform:none;} }
   .wviz svg{display:block;width:100%;height:auto;overflow:visible;}
-  .svg-cap{font-family:var(--display);font-weight:500;letter-spacing:.08em;}
-  .wbody{padding:13px 15px 15px;}
-  .wcard .tag{font-family:var(--display);font-weight:500;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-deep);margin:0 0 7px;}
-  .wcard h3{font-size:15px;font-weight:600;letter-spacing:-.005em;margin:0 0 5px;}
-  .wcard p{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.5;text-wrap:pretty;}
+  /* Rótulos DENTRO del SVG en la sans, igual que en los gráficos del informe: si es cifra,
+     mono; si es rótulo, Satoshi. */
+  .svg-cap{font-family:var(--sans);font-weight:var(--w-fuerte);letter-spacing:.08em;}
+  .wbody{padding:0;}
+  /* Mismo rótulo de detalle que `.fnode-tag` del informe. */
+  .wcard .tag{font-family:var(--sans);font-weight:500;font-size:var(--t-xs);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 var(--s2);}
+  .wcard h3{font-size:17px;letter-spacing:-.015em;margin:0 0 var(--s1);line-height:1.2;}
+  .wcard p{font-size:var(--t-md);color:var(--ink-soft);margin:0;line-height:1.6;}
   /* micro-interacciones sobrias */
   @media (prefers-reduced-motion:no-preference){
     .n-on{transform-box:fill-box;transform-origin:center;animation:nodeBreath 3.8s ease-in-out infinite;}
@@ -255,18 +403,23 @@
 
   .statline{display:flex;align-items:center;gap:22px;margin-top:30px;border-top:1px solid var(--hair);
     padding-top:22px;flex-wrap:wrap;}
-  .statfig{font-family:var(--display);font-weight:600;line-height:.85;white-space:nowrap;}
+  /* La cifra héroe va en Cabinet Bold: el sistema la lista explícitamente entre los trabajos
+     del display, junto a títulos y nombres de nudo. El verde es estado de DATO (admite
+     demanda), no marca — por eso aquí no entra ni cobalto ni magenta. */
+  .statfig{font-family:var(--titulo);font-weight:var(--w-titulo);line-height:.85;white-space:nowrap;
+    letter-spacing:-.03em;font-variant-numeric:tabular-nums;}
   .statnum{font-size:58px;color:var(--ok);}
-  .statden{font-size:30px;color:var(--ink-soft);font-weight:500;}
-  .statcap{margin:0;flex:1 1 300px;font-size:13.5px;color:var(--ink-soft);line-height:1.5;text-wrap:pretty;}
+  .statden{font-size:30px;color:var(--ink-mute);}
+  .statcap{margin:0;flex:1 1 300px;font-size:var(--t-md);color:var(--ink-soft);line-height:1.6;}
   .statcap b{color:var(--ink);font-weight:600;}
-  .statsrc{display:block;margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--ink-soft);}
+  .statsrc{display:block;margin-top:var(--s2);font-family:var(--mono);font-size:var(--t-xs);letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-mute);}
 
-  .trust{margin-top:24px;font-size:13.5px;color:var(--ink-soft);line-height:1.6;text-wrap:pretty;}
+  .trust{margin-top:var(--s4);font-size:var(--t-md);color:var(--ink-soft);line-height:1.7;}
   .trust b{color:var(--ink);font-weight:600;}
 
-  .signup.closing{margin:30px 0 4px;}
+  /* El cierre no necesita margen propio: la banda ya lo separa por arriba y por abajo. */
+  .signup.closing{margin:var(--s7) 0 0;}
 
   /* ============ «ver un ejemplo» + lightbox ============ */
   /* Columna flexible en vez de restar alturas a mano: antes el cuerpo llevaba un
@@ -296,7 +449,10 @@
     text-decoration:none;padding:10px 18px;white-space:nowrap;}
   .ex-foot a:hover{background:var(--brand-deep);}
 
-  footer{margin-top:36px;border-top:1px solid var(--hair);padding:18px 0 44px;
+  /* La firma del colofón va en magenta, igual que en el informe: es la única marca de autoría
+     de la página, y el magenta es exactamente el color de «esto lo decimos nosotros». */
+  footer .firma{color:var(--brand);font-weight:600;}
+  footer{margin-top:var(--s6);border-top:1px solid var(--hair);padding:18px 0 44px;
     font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);
     display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;}
   footer a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--hair);}
@@ -305,20 +461,22 @@
   /* ============ móvil ============ */
   /* La mayoría del tráfico llega desde LinkedIn, o sea desde un teléfono: el movil no es
      una adaptación del escritorio, es el caso principal. */
+  /* ⚠️ EL SUELO DE TEXTO SUBE EN MÓVIL, exactamente igual que en el informe (§responsive):
+     la escala está calibrada para una pantalla ancha, y en un móvil de 390px «pequeño»
+     significa otra cosa. Subir los cuatro tokens es lo único que hace falta — ese es el motivo
+     de que los tamaños sean tokens y no literales. */
+  @media (max-width:820px){
+    :root{--t-xs:11.5px;--t-sm:12.5px;--t-md:14px;--t-base:16px;}
+    /* La cabecera de apartado ENVUELVE, igual que en el informe. Sin esto el rótulo no encoge
+       (`flex:0 0 auto`), la nota va en `nowrap` y entre los dos empujaban la página a 411px de
+       ancho en un móvil de 390: barra de scroll horizontal en toda la landing. Medido. */
+    .sec-h{flex-wrap:wrap;gap:10px;}
+    .sec-fill{min-width:24px;}
+  }
+
   @media (max-width:680px){
     .whats{grid-template-columns:1fr;}
     .cj-per{display:none;}
-
-    /* La prosa deja de justificarse. El justificado necesita ~45 caracteres por línea para
-       repartir el sobrante; a 40 o menos abre huecos enormes entre palabras («acceso
-       disponible nodo a nodo» ocupaba una línea entera estirada). Y no hay guionado que lo
-       salve: está comprobado que el motor no aplica `hyphens:auto` de forma fiable. */
-    .hero-copy .lede,
-    .signup p.sub,
-    .wcard p,
-    .statcap,
-    .trust,
-    .ex-foot .note{text-align:left;}
 
     /* Sin separadores en la letra pequeña: al envolverse, el de la línea siguiente queda
        colgando al principio como un palo suelto. La separación la da el espaciado. */
@@ -335,22 +493,29 @@
 
   @media (max-width:460px){
     .cj-src{display:none;}
+    /* ⚠️ EL CAJETÍN DEJA DE SER INTOCABLE EN PANTALLA ESTRECHA. Los valores llevan `nowrap`, y
+       al pasar de Barlow CONDENSED a Cabinet —que es ancha— «Radar de Capacidad» creció lo
+       suficiente como para empujar el cajetín más allá de 320px. Aquí el rótulo puede partir y
+       baja un punto; el `nowrap` solo tiene sentido mientras quepa. */
+    .cajetin{flex-wrap:wrap;}
+    .cj-field{min-width:0;}
+    .cj-v{white-space:normal;}
+    .cj-doc .cj-v{font-size:15px;}
     .hero-copy{padding:24px 18px 6px;}
-    .uni-legend{padding:8px 18px 0;}
+    .uni-legend{padding:var(--s2) 0 0;}
     .uni-legend .note{margin-left:0;flex-basis:100%;}
     .sheet-facts{padding:11px 18px 13px;gap:5px 16px;font-size:12px;}
     .sg-body{padding:18px 16px;}
     .form-row{gap:8px;}
     .form-row button{flex:1 1 100%;}
 
-    /* El unifilar respira menos: en vertical el espacio es el recurso escaso y ese hueco
-       en blanco alejaba el formulario de la primera pantalla. */
-    .uni{margin-top:6px;}
-    .uni-svg{margin-bottom:-6px;}
+    /* En vertical el espacio es el recurso escaso: el mapa se pega más al texto para no
+       alejar el formulario de la primera pantalla. (`.uni-svg` era del unifilar borrado.) */
+    .uni{margin-top:var(--s2);}
 
     /* Titular y marca, un punto más contenidos para que quepan sin partirse raro. */
     .wordmark{font-size:19px;}
-    .cj-brand{padding:11px 18px;}
+    .cj-brand{padding:11px 0;}
     .signup h2{font-size:23px;}
     .statnum{font-size:44px;}
     .statden{font-size:24px;}
@@ -363,7 +528,7 @@
   @media (hover:none){
     a,button{-webkit-tap-highlight-color:transparent;}
     .form-row button:active{background:var(--brand-deep);}
-    .wcard:active{border-color:var(--ink);}
+    .wcard:active .wviz{transform:translateY(-2px);}
   }
 </style>
 </head>
@@ -408,37 +573,20 @@
 
         <!-- Unifilar: la línea de transporte cruza la lámina; los nudos con hueco se encienden en verde -->
         <div class="uni">
-          <svg class="uni-svg" viewBox="0 0 680 150" role="img"
-               aria-label="Esquema unifilar ilustrativo: una línea de transporte con nudos; los marcados en verde admiten nueva demanda">
-            <path class="u-draw u-bus" d="M0 88 H680" pathLength="1"/>
-            <path class="u-draw u-stub" d="M150 88 V48" pathLength="1" style="animation-delay:.42s"/>
-            <path class="u-draw u-stub" d="M352 88 V118" pathLength="1" style="animation-delay:.78s"/>
-            <path class="u-draw u-stub" d="M545 88 V48" pathLength="1" style="animation-delay:1.12s"/>
-            <circle class="u-j" cx="150" cy="88" r="4" style="animation-delay:.5s"/>
-            <circle class="u-j" cx="352" cy="88" r="4" style="animation-delay:.86s"/>
-            <circle class="u-j" cx="545" cy="88" r="4" style="animation-delay:1.2s"/>
-            <g class="u-node" style="animation-delay:.3s"><circle class="nd-closed" cx="52" cy="88" r="10"/></g>
-            <g class="u-node" style="animation-delay:.62s">
-              <rect class="nd-halo" x="132" y="18" width="36" height="36"/>
-              <rect class="nd-ok" x="139" y="25" width="22" height="22"/>
-            </g>
-            <g class="u-node" style="animation-delay:.72s">
-              <circle class="nd-halo" cx="248" cy="88" r="19"/>
-              <circle class="nd-ok" cx="248" cy="88" r="13"/>
-            </g>
-            <g class="u-node" style="animation-delay:.95s"><circle class="nd-closed" cx="352" cy="126" r="10"/></g>
-            <g class="u-node" style="animation-delay:1.02s"><rect class="nd-closed" x="443" y="79" width="18" height="18"/></g>
-            <g class="u-node" style="animation-delay:1.3s">
-              <circle class="nd-halo" cx="545" cy="36" r="19"/>
-              <circle class="nd-ok" cx="545" cy="36" r="13"/>
-            </g>
-            <g class="u-node" style="animation-delay:1.4s"><rect class="nd-closed" x="627" y="79" width="18" height="18"/></g>
-          </svg>
+          <!-- FONDO:INICIO — GENERADO por 'npm run fondo'. NO EDITAR A MANO.
+       780 nudos de transporte reales (periodo 062026): 248 con capacidad, 532 sin.
+       Sin líneas entre nudos: no tenemos la topología y no se inventa. -->
+      <svg class="fondo-mapa" viewBox="0 0 560 440" aria-hidden="true" data-periodo="062026" data-abiertos="248" data-total="780" preserveAspectRatio="xMidYMid meet">
+        <g class="fm-tierra"><path class="fm-ccaa" d="M183.9 46L186 48.5L185.6 51.8L189.8 55.4L190 57.2L197.3 57.4L201.7 55.3L205.6 59.8L210 60.6L210.6 65.8L213.8 65.2L214.4 66.4L212.3 68.2L216.7 70.8L219.3 67.2L220.4 71L223.1 70.4L223.8 68.5L226.6 68.8L226.5 65.1L225 64.1L224.3 66.1L222.6 64.1L226.2 62.6L226 61.5L224 61L222.2 63.6L220.1 61.5L221.7 58.1L225.5 56.3L225.7 54L228.9 54.2L233.5 49L241.7 51.5L249.4 48L250.5 49.5L253.6 49.3L252.2 52.1L254.1 53.3L253.2 54.5L253.8 56.8L252.4 57.2L257.1 58.2L260.2 61.5L255.8 63.6L250.5 61L248.2 64.9L251.3 67.4L251.9 65.2L254.9 64.1L253.1 68.5L254.5 69.3L253.6 71L257.5 70.6L260.2 73.8L263.4 74.3L265.1 77.2L256.1 77.1L257.1 79.7L254.1 82.2L256.6 82.9L255.7 85L257.6 87.2L257.2 91.1L255.4 88.7L256.9 91.8L255.1 92.1L255.9 97.6L254.3 100.1L258.1 105.9L262.1 105.8L264.1 109.9L267.5 108L268.5 104L270.1 103.9L271.2 105L269.6 109.9L276.2 110.6L278.8 106.8L278.8 104.4L286.7 102.9L288.6 105.8L294.3 105.3L292.9 106.9L295.1 110.3L295 112.6L300.6 114.6L305.1 112.2L306.7 118L305.3 121.4L308.4 124.7L307.9 126L302.5 131.3L299.7 131.2L300.7 134L300.1 137.1L301.9 141.2L298.2 142.4L298 140.2L295.3 139.2L294.8 142.6L292.9 143.9L293.6 152.8L297.3 154.8L297.5 158.4L294.1 156.3L292.4 158.1L290.1 157.4L286.5 159.5L285.2 157.9L282.7 159.4L278 154L275.6 154.6L276.3 153.1L274.6 152.7L275.9 150.8L274.3 151.2L270.8 148.1L266.6 149.1L263.9 145.5L257 148.2L251.5 146.6L249.3 149L242.9 148.2L243.4 151.3L235 154.7L228.3 162.4L223.3 164.8L220.4 173.6L216.5 173.4L212.7 179.1L213.1 182L209.8 183.1L207.9 181.8L208 185.1L206.4 186.7L206.7 193.1L202.7 193.3L201.4 197.9L197.7 196.7L198.4 199.2L196.8 201.1L197 203.1L193.4 204.2L192.1 203.4L191.7 199.8L187.4 200.2L187.3 202.2L182.6 205.6L182.6 207.4L179.4 208.8L178.9 206.2L172.8 210.1L166.9 208.9L164.9 206L165.9 200.7L158 204.3L155.1 203.1L152 199.3L148 199.6L147.7 196.1L144.3 197.5L143 200L141 199.4L139.1 196.8L135.5 195.9L137.1 193.8L134.5 192.6L135.1 191.5L130.5 189.2L118.3 196.4L116.3 200.4L112.2 201.8L111 200.5L109.5 202L105.9 201.2L105.3 199L108.5 195.5L105.8 190.9L108 187.8L107.7 185.8L106 185L108 180L106.5 175.3L106.7 170.6L107.8 170.3L102.6 160.9L107.4 160.5L109.6 157.1L109.1 155.4L113.8 149.6L119.9 148.6L124.6 143.9L124.1 142.4L127 142.3L126.4 141L132.2 132.5L127.6 128L122 126.8L119.8 128.2L117.8 126.8L117 123.8L119.1 117.1L116.9 116.5L117.9 113.7L116.8 112.5L111.8 113.9L108.3 111L106 113.4L100.4 111.8L101.3 109L98.4 106.5L104.7 99L108.3 99.2L107.6 98L110.1 94.9L110.4 91.7L106.1 89.4L107.2 88.2L106.7 84.8L102.5 83.3L100.6 84.7L96.7 84L98.4 80L97.9 77.5L99.6 77L98 74.3L105.1 69.4L106.2 67.6L104.9 64.9L107.2 65.1L105.9 62.8L108.9 64.5L112.2 62.4L120.2 62.5L122.4 61.5L120.6 58.8L122.8 59L125.4 55.3L130.7 57.9L131.1 55.9L134.3 57.3L135.9 56.7L136.4 54.4L140.7 55L143.1 58.8L147.5 60.3L149.1 59.9L152 55.4L159.9 57.3L160.5 55.5L164 55.8L164.9 53.5L175.6 53.1L176.6 48.9L179.8 49.4L181.1 47.3ZM266.3 69.4L277.1 70.7L275.1 74.2L276.3 75.6L278.6 74.8L278.7 76.8L274 76.7L273.1 75.4L268.7 75.8L264.7 71.9L266 69Z"/><path class="fm-ccaa" d="M407.8 65.7L416.2 69.3L422.3 69.4L425.8 73.5L433.4 73L436.8 79L435.7 82.5L437.9 83.9L435.9 85.2L437.3 87.7L441.2 87.9L441.6 86.5L445.4 86L445.9 84.2L448.1 84.2L456.5 86.8L457.7 90.6L459.7 92.3L462.5 91.6L465 88.5L469.3 87.6L476.3 89.9L478.3 92.7L480.3 93.1L481.9 91.8L485.9 92.7L485.1 90.3L486 89.4L490.1 89L496.9 85.3L500.6 85.8L502.4 88.3L506 87.8L505.5 91.6L511.9 93.8L509.5 98L505.5 96.7L503.5 99.7L503.9 103.7L507.5 106.8L506.8 109.8L508.3 113L506.1 117.4L503.1 118.5L496.4 125.2L469.7 138.5L463.7 147.3L431 155.8L427.4 157.2L426 159.6L424.1 158.5L418.6 160.3L407.2 172.6L414.4 177.1L406 185.3L403 184.4L407.5 183.7L409 181.4L403.2 182.1L399.8 187.3L397.2 186.3L395.3 183.1L390.4 181.7L390.9 178.6L385.6 175.4L388.4 174.5L390.3 171.8L388.8 168.4L390.9 164L389.6 161.7L390.4 161.4L387.9 160.2L387.3 155.9L390.9 154.3L392.1 150.7L394.5 150.1L393.1 145.3L394.2 144.1L392 141.9L393.4 138.9L392.9 137.3L395.1 136.9L397.1 134.2L396.3 131.1L393.2 131.2L392.3 127L395.1 123L397.9 122.6L403.5 117.1L403.5 114.6L401.7 113.6L405.5 110.3L409.8 93.6L408.8 92.9L410 92.2L408.1 91.3L409 90.4L406.8 85L408.8 84.1L408 83.1L409.2 82.6L409.9 78.6L407.1 77.7L405.6 74.6L406.4 72.8L404.9 71.2L405.6 66.8Z"/><path class="fm-ccaa" d="M333.3 279.7L338.3 284.5L339.2 288.7L338.8 292.7L335.6 295.7L335.9 300.5L339.7 301.8L340.6 304.2L337.8 311.4L338.4 314.6L343.3 322.5L349.3 327.8L349.2 329.6L347.4 328.4L345 333.4L350.2 337.5L349.4 329.9L350 335.3L351.8 337.6L342.5 341.7L339.6 339.3L338.6 340.8L335 340.9L334.9 342.8L330.8 340.6L326.3 341.3L321 345.2L319.9 348.6L314.3 351.1L309.9 347.5L305.6 346.9L298.9 335.6L300.4 325.4L292.5 324.3L285.8 317.2L286.2 315.1L288.9 312.7L290.9 308L294.9 306.1L297.4 302.6L300.1 303.9L303.1 303L309.6 298.7L311.9 299.5L312.6 302.3L317 301.6L320.2 298.9L319.4 290.8L321.3 288.3L321.4 284.7L324.7 281.9L325.6 283.3L332 279.2Z"/><path class="fm-ccaa" d="M259.6 77L265.3 77.3L266.7 78.5L266.5 81.5L269.8 78L272.2 79.5L271.2 83.5L272.4 83.1L273.5 85.3L275.2 84.2L275.6 85.8L278.2 85.2L279 83.3L278.8 84.9L282.8 84.9L285.6 86.9L287.9 86.1L292.4 89.2L294.9 88.6L295.8 92.4L300.5 92L304.6 95.4L304.5 97.3L312.2 100.4L311.3 101.4L312.2 102.5L310.6 103.5L306.1 102.7L303 107.3L305.5 110L305.1 112.2L300.6 114.6L294.8 112.4L295.1 110.3L292.9 106.9L294.1 105.1L288.6 105.8L286.7 102.9L278.8 104.4L278.8 106.8L276.2 110.6L269.6 109.9L271.2 105L270.1 103.9L267.8 104.7L267.5 108L263.9 109.9L262.2 105.9L258.1 105.9L254.3 100.1L255.9 97.6L255.1 92.1L256.9 91.8L255.4 88.7L257.2 91.1L257.6 87.2L255.7 85L256.6 82.9L254.1 82.2L257.1 79.7L256.1 77.1Z"/><path class="fm-ccaa" d="M507.5 216.7L502.2 219.6L503.2 221.9L507.2 220.3L506.1 222.8L503.8 223.2L504.4 225.8L509.1 228.5L512.9 225.4L518.1 229.3L516.4 233.5L514.8 233.8L515.1 236.4L510.6 240.8L508.3 247.7L501 252.7L497.3 247.6L490.5 247.6L487.9 241.7L488.9 239.9L485.8 237.2L480.7 239.2L479.9 242.7L478.1 242.2L477.3 238.7L474.5 239.4L472.9 237.1L473.3 235L482.4 229.2L490.1 222L505.6 216.6ZM542.7 209.9L543 212.2L544.2 211.2L544 213.1L545.1 210.9L547.1 214.8L549.7 214.7L549.1 216.3L552 220.9L549.2 219.8L551.2 221.5L549.7 224.4L537.3 217.7L531.8 218.3L532.4 214.3L530.6 213.6L531.8 211.8L541.1 211.8L542.2 209.8ZM440.4 260.3L443.3 261.8L442.6 263.2L444 265.1L440.2 267.4L440.3 269.4L436 271.5L435.4 275.3L432.9 273.2L428.1 273.2L427.7 268.7L431.4 267.9L430.9 264.9L433.5 262.6L439 261.4ZM436.6 278.9L439 282.7L441.9 282.5L442.5 284L437 282.9L434.5 285.2L434.3 281.1L435.9 280.9L436.5 278.4Z"/><path class="fm-ccaa" d="M60.3 402.1L61 403.5L58.5 404.7L55.8 407.4L54.4 413.2L51.7 416.3L48.3 416.8L43.5 407.9L52.4 406.4L56.5 402.4L59.5 402.5ZM110.5 397.9L111.7 399L111.9 403L111 404.8L111.4 406.8L109.9 410.6L103.2 412.8L100.7 415.8L96.8 415.3L97.2 414.1L99.8 414L103.1 411.5L103.5 408.7L107.3 402L107.6 399.1L108.6 398.4ZM76.6 412.4L76.6 415.4L77.7 416.7L78 418.7L77.4 418.8L77.4 420.5L76.5 421.8L73.3 423.5L71 423.2L68.5 421.1L67.5 419.2L67.7 416.6L70.2 414.8L70.2 412.8L75.6 413.8L76.1 412.7ZM119.8 386L120.9 387.1L119.9 388.6L120.3 389.5L119.4 392L113.9 394.1L112.8 395.8L110.8 395.3L110.7 394.6L111.8 393.5L112.1 390.9L115.6 388.7L118.1 388.8L119.2 386.3ZM21.5 395.4L24.5 395.8L25.6 398.2L24.6 399.9L24.9 402.6L23.1 405.5L19.4 397.9L21.3 395.4ZM35.9 411.4L39.4 413.7L39.5 414.5L38 416L35.7 416.3L34 414.5L34.6 411.8L35.6 411.5ZM21.2 420.7L22.1 421.9L20.5 424L20 426L18.4 424.7L16 424.1L16.2 423L18.7 422.9L19.7 421.4Z"/><path class="fm-ccaa" d="M235.9 31.7L242.3 34.3L239.8 36.3L241 35.9L240.9 37.4L241.5 35.7L250.6 37.9L253.4 40L253.4 42.4L251.1 43.6L250.5 42.3L246.2 42.7L241.5 46.1L242.8 51.4L235.4 50.6L233.5 49L228.9 54.2L225.7 54L225.5 56.3L221.4 58.4L219.9 62L222.2 63.6L224.9 60.7L226.3 62.1L222.6 64.1L224.3 66.1L225 64.1L226.1 64.8L226.9 68.2L225.1 69.5L223.8 68.5L223.1 70.4L220.5 71L219.4 67.1L216.3 70.8L212.1 67.9L214.5 65.8L211 66.3L210 60.6L205.6 59.8L201.1 55.2L197.3 57.4L190.7 57.5L185.6 51.8L185.7 49.1L190.2 48.5L190.4 45L194.3 44.4L195.3 42.7L198.7 43.9L198 39.9L199.1 37.9L212.6 37.5L228.1 32.8L229 34.1L226.5 34.9L226.9 37.5L229.7 34.9L228.4 34.5L230.1 34.5Z"/><path class="fm-ccaa" d="M178.2 280.7L179.4 282.4L184.5 282.8L185.2 286.6L191.3 288.8L201.5 297.7L208.1 300.7L209.3 297.6L222.9 299.3L228.1 296.4L235.6 297.8L236.2 295L237.8 295.4L238.4 297.3L241.4 297.7L244.4 295.7L244.5 293.8L246.4 293.4L253.9 295.7L256.9 293.7L259.4 297.3L260.9 294L264.2 295L268.7 290.8L272.3 292.7L275.7 291.9L276.8 293L276.5 296.9L280.1 297.8L280 302.9L282 304.7L281.6 308.9L277.4 314.2L285.8 317.2L292.5 324.3L300.4 325.4L298.9 334.1L300.3 338.4L305.6 346.9L309.9 347.5L314.1 351.1L307.5 358.6L303.2 373.8L299.7 376.1L299.4 378.9L294.4 384.5L291.7 385.1L287.8 379.9L285 378.8L282.4 380.4L280.4 379L277 380.1L274.7 384.8L271.4 387.1L265.5 386.4L262.4 383.5L249.1 383.4L242.7 386.5L235.4 383.9L230.4 385.2L226.1 383.4L221.3 384.8L216.9 383.6L212.3 385.4L203.8 385L194.1 396.2L190 397.5L183.1 396.3L172.6 401L167 410.6L166.1 414.6L162.6 413.5L162.5 418.9L155.3 422.6L153.6 419.8L147.8 418.5L143.1 413L138.3 413.2L127.4 395.1L128.6 394.3L130.5 398.5L132.8 395.5L130 396.3L130.4 392.2L124 389.6L122 384.2L126 381.3L123.9 380.6L118.9 371.7L103.1 361.4L106.5 364.9L98 359.8L83.6 361.1L81.3 345.2L78.9 341.8L82.1 336L83 331.1L88.5 325.3L89.3 319.6L94.5 318.5L95.8 316.3L99.7 317.4L102.5 307.7L108 309.2L107.1 312.3L109.4 313.7L114.9 313.5L116.5 317.4L120.7 318.1L121.6 315.6L123.2 315.5L127.6 319.7L132.5 321.6L135.1 319.5L141.6 318.8L143.3 315.3L142.6 313.1L145.6 309.6L151.9 308.8L152.3 310.4L151.5 309.7L151.9 310.7L150.1 312L151.3 314.3L158.1 310.2L158.8 306.1L156.7 301.4L156.9 296L162.9 291.9L164.8 288.2L167.3 288.5L171.3 283.8L172.3 284.2L172.3 281.1L175.7 281.7Z"/><path class="fm-ccaa" d="M146.1 24L149.5 28L152.6 28.7L151.6 28.9L152.5 30.2L163.1 29.5L164.1 30.8L167.8 30.5L171 33.7L182.6 34.3L191.6 37.3L198.8 37.8L198.7 43.8L195.3 42.7L194.3 44.4L190.4 45L189.8 48.8L186 49L183.2 46L179.8 49.4L176.6 48.9L175.6 53.1L164.9 53.5L164 55.8L160.5 55.5L159.9 57.3L152 55.4L149.1 59.9L147.5 60.3L143.1 58.8L140.7 55L136.4 54.4L135.9 56.7L134.3 57.3L131.1 55.9L130.7 57.9L125.4 55.3L122.8 59L120.6 58.8L122.4 61.5L110.9 62.7L108.9 64.5L106.3 62.7L104.9 59L101.5 56.5L101.3 58.9L99.9 57.4L102.2 53.9L106.7 52L106.2 49.7L105.1 48.5L101.5 51.3L100.9 47.7L97.3 45.7L97.4 42.5L95.8 42.6L94.7 39L92.5 38L92.9 36L95.7 36.1L97.9 33.6L98.9 29.3L125.5 29.7L129.9 27.4L135.2 29.5L141.5 28.2L145 25.5Z"/><path class="fm-ccaa" d="M372.6 173.4L376.6 176.6L379.9 176.6L380.9 178.5L388.3 176.3L388.7 178L390.9 178.6L390.4 181.7L395.3 183.1L397 184.4L396.7 186L399.8 187.3L395.5 195.9L387 205.4L385.1 210.2L381.2 212.7L379 218.9L374.4 224.1L370.9 233L366.6 239.2L367.2 243.9L366 242.6L366.7 248.1L370.6 256.8L369.8 259.4L372.8 266.9L378.4 273L384.3 274.4L387.1 276.7L386.8 278.3L388.6 280.2L383.2 283.5L382.6 285.7L378.6 285.9L375.3 291.3L373.3 290.7L366.8 293.7L363.8 296.1L363.1 300.2L359 301.2L358.9 308L354.7 309.5L353.1 319.4L351.4 320.1L348.8 326.5L343.3 322.5L338.4 314.6L337.8 311.4L340.6 304.2L339.7 301.8L335.8 299.4L335.6 295.7L338.8 292.7L338.2 284.4L340.8 284.4L342.7 282.3L340.9 278.2L342.2 277.7L342.3 272.1L340.9 269.4L333.5 270.2L328.8 264.2L332.8 250.6L325.9 249.1L322.8 246.7L321.1 247.7L321.2 245.8L318.5 244L319.4 240.5L318.5 237.9L324.6 230.6L328.6 230.5L328.3 228.1L331.3 221.8L331.2 217.1L339.7 215.4L342.6 216.4L342.8 221.1L344.8 222.4L347.4 220.7L345.7 218.4L345.8 215.7L348.2 214.6L349.1 212L354.7 210.8L354.1 209.1L356.1 207.3L357.5 201.4L359.5 202.6L363.9 200.7L363.7 198.5L368 195.5L365.4 191.4L368.3 189.8L367.2 187.7L367.5 182.7L364.4 182.5L364 179.9L369.8 178.5L371.4 173.7ZM327.5 203.5L329.5 208.4L333.4 208.5L336.4 211.8L329.5 214.7L324.3 213.6L323 209.2L321.1 207.4L325.2 207.7L326.7 206.7L326.4 204.8Z"/><path class="fm-ccaa" d="M313.3 42.2L315 45.3L317.9 43L324 45.2L322.8 51.7L320.4 53.9L321.7 56L325.2 56.9L326 52.8L328.5 52.2L327 54.7L328.8 56.1L330.8 55.7L333.6 58L334.7 57.1L341.5 60.8L349.1 60L350.3 62.4L346.5 63.5L344.7 70.7L338.2 74L337.2 77L333.2 76.7L331.2 81.8L328.5 81.8L327.6 83.8L328.4 85.3L325.7 88.3L324.9 90.7L326.2 91.9L323.4 95.2L322.6 99.4L323.4 103.8L327.1 108.2L322.6 114.9L317 114.9L303.3 108.9L303.3 106.6L306.1 102.7L310.6 103.5L312.2 102.5L311.3 101.4L312.2 100.5L304.5 97.3L304.6 95.4L299.6 91.5L295.8 92.4L294.9 88.6L292.4 89.2L287.9 86.1L283.4 85.9L282.5 83.9L283.7 83.5L283.6 79.2L281.3 80.9L279.5 78.6L282.8 75.9L284.1 77.4L287.9 76.3L286.5 72.7L288.9 71.5L288.2 69.6L290.1 66.7L290 62.2L297.9 59.4L298.5 55L303.3 51.3L302.8 46.7L305 47.3L307.6 45.5L308 43.5Z"/><path class="fm-ccaa" d="M72.6 17.4L73.3 18.1L71.8 20.1L74.4 19.2L75.9 23.9L76.5 21.3L78.9 20L85.5 23.5L90 28.4L89.6 29.9L90.4 28.8L98.4 29.8L97.9 33.6L95.7 36.1L92.9 36L92.5 38L94.7 39L95.8 42.6L97.4 42.5L97.3 45.7L100.9 47.7L101.5 51.3L105.1 48.5L106.9 50.9L104.9 53.6L102.2 53.9L99.9 57.4L101.3 58.9L101.5 56.5L105.2 59.2L107.2 65.1L104.9 64.9L106.2 67.6L105.1 69.4L98 74.3L99.6 77L97.9 77.5L98.4 80L96.7 84L100.6 84.7L102.5 83.3L106.9 84.9L107.2 88.2L106.1 89.4L110.4 91.7L110.1 94.9L107.6 98L108.3 99.2L104.7 99L98.4 106.5L101.3 109L99.5 113L92.7 111.4L91.9 116.6L85.1 118.1L82.7 120.4L81.7 117.4L75.3 119.3L76.4 116.5L71.8 115.2L66.1 116.6L64.8 118.2L64.2 114.2L59.3 119.3L53.3 119.9L53.1 116.7L51.9 117L51.2 114.9L56.6 108.5L55.1 106.1L52.6 106.9L51.9 102.4L46.6 106L34.4 108L29.7 113.8L24.7 116.6L23.9 104.6L26.9 104.4L25.9 102.3L28.9 98.8L35.5 95.4L34.8 92.1L33.5 95.3L25 97.4L25.7 94.3L27.3 95.9L26.4 92.8L29.7 92.7L33.8 88.1L26.4 90.4L24.6 86.7L22.3 86.3L25.1 84.3L25.2 87.1L27.1 86.9L27.7 84.3L26.5 81L29 79.5L30.9 74.6L27.9 77.3L26.2 74.7L25.6 78.9L24 76.9L22.5 78.8L23.1 79.9L18.2 83.5L18.4 81L16.3 80.4L18.6 74.2L24.9 67.3L21.4 69.9L17.4 69.5L18 70.4L16.4 72L13.9 68.9L15.6 66.9L14 65L14.9 63.3L13 61.3L12.4 62.8L10.6 61.4L8.7 64.1L8.1 62.4L9.7 58.2L8 55.4L9.5 55.8L11.2 52.4L13.3 52.9L13.4 50.4L12.3 52L11.3 50.5L13 48.4L16.8 48.9L19.4 46.2L22.4 46.6L20.3 44.1L22.8 43.7L23.5 41.7L26 41.7L26.3 40.4L31.5 43.3L38.5 41.9L43.9 38.1L44.4 40.7L45.7 40.5L45.7 38.1L47.6 37.3L51.5 41.3L51 38.2L52.9 36.5L47.2 35.2L51.8 34.4L53.8 31.4L51.9 33.5L50 32.7L46.3 34.5L48 30.5L47 29L49.5 29.3L56.1 23.7L57.7 24.6L57.3 21.7L59.9 21.7L63.7 18.3L65.1 18.1L65.9 21.4L64.8 20.7L65 23.4L63.7 23.4L66 23.6L65.4 21.6L67.3 22.2L67.3 20.6L70.8 19.5Z"/><path class="fm-ccaa" d="M349.4 62.4L356.6 69.8L359.1 67.4L363.5 68.8L366.7 66.2L372.8 68.9L375 72.9L378.6 74.8L386.3 72.1L389.6 73.2L391 75.4L393.6 72.7L396.1 74.5L405.6 74.5L407.3 77.9L409.9 78.6L409.2 82.6L408 83.1L408.8 84.1L406.8 85L409 90.4L408.1 91.4L410 92.2L408.8 92.9L409.8 93.6L405.7 109.8L401.7 113.6L403.5 114.6L403.5 117.1L397.9 122.6L395.1 123L392.3 127.1L393.2 131.2L396.3 131.1L397.1 134.2L395.1 136.9L392.9 137.3L393.4 138.9L392 141.9L394.2 144.1L393.1 145.3L394.5 150.1L392.1 150.7L390.9 154.3L387.3 155.9L387.9 160.2L390.4 161.4L389.6 161.7L390.9 164L388.8 168.4L390.3 171.8L388.4 174.5L385.6 175.4L385.8 176.8L380.9 178.5L379.9 176.6L376.6 176.6L372.6 173.4L370.3 175.2L369.8 178.5L364.1 179.7L364.4 182.5L367.5 182.7L367.2 187.7L368.3 189.8L365.4 191.4L368 195.4L363.7 198.5L363.9 200.7L362.1 201.8L357.5 201.4L356.1 207.3L354.1 209.1L354.7 210.8L349.1 212L348.2 214.6L345.8 215.7L345.7 218.4L347.4 220.7L344.6 222.4L342.8 221.1L342.5 216.3L333.6 215.9L332.7 213.9L336.4 211.3L333.4 208.5L329.5 208.4L327.4 203.5L326.5 206.9L322 207.2L321.8 204.2L317.7 204.5L311.8 198.4L310.5 200L311.5 197.8L307.3 193.1L311.7 189.1L312.2 183.7L315.4 185.2L317.5 183.5L317.7 172.3L314.5 168.7L314.7 165.4L307.2 157.8L301 153.5L297.3 154.8L293.6 152.8L292.5 147.4L295.3 139.2L298 140.2L298.2 142.4L301.9 141.2L300.1 137.1L300.7 134L299.7 131.2L302.5 131.3L307.9 126L308.4 124.7L305.3 121.4L306.7 118L305.1 115.1L305.5 110L317 114.9L322.9 114.6L327.1 108.2L323.4 103.8L322.6 99.4L323.4 95.2L326.2 91.9L324.9 90.7L325.7 88.3L328.4 85.3L327.8 83.2L328.7 81.4L331.2 81.8L333.2 76.7L337.2 77L338.2 74L344.7 70.7L346.5 63.5Z"/><path class="fm-ccaa" d="M238 154.1L240 157.5L242.5 158.1L241.9 160.2L243.7 162.4L241.1 167.3L241.9 168.9L239 173.4L241.7 174.8L240.8 178.6L243.3 179.6L243.8 178.4L245.7 181.3L246.8 180.4L246 181.9L248.1 184.9L247.6 186.5L251.5 187.7L251.5 191.5L254.3 193.4L251.7 201.6L255.4 200L256.8 206.3L255.6 207.1L257 209.8L254.8 211.3L252.4 209.7L248.5 212L244.5 210.5L243.5 212.7L239.2 211.9L227.4 220.5L224.5 218.2L229.4 217L231.5 213.5L234.1 212.3L235.2 208.8L232.8 207L229.8 207.6L227.4 205.3L221.5 204.6L216.6 200.7L213.7 201.7L211.9 199L207.3 202.9L205.6 202.2L204.4 197.9L202.1 202.2L198.5 204.1L196.6 203.7L196.8 201L198.4 199.2L197.7 196.7L201.4 197.9L202.7 193.3L206.7 193.1L206.4 186.7L208 185.1L207.9 181.8L209.8 183.1L213.1 182L212.7 179.1L216.5 173.4L220.4 173.6L223.3 164.8L228.3 162.4L235 154.7Z"/><path class="fm-ccaa" d="M130.5 189.2L137.1 193.8L135.5 195.9L139.1 196.8L139.5 198.6L142.2 199.8L147.7 196.1L148 199.6L152 199.3L157.7 204.2L165.9 200.7L164.9 205.9L166.2 208.4L164.9 209.3L165.1 215.4L163.4 220.8L166.7 220.1L168.3 221.6L167.3 227L169.5 227.4L173 224.9L172.7 227.4L174.1 229.3L171.4 235.4L181.6 246L184.8 247.3L192.1 243.1L192.8 244.4L191.3 249.4L189.2 249.8L191.3 255.6L193.7 257.7L187.2 256.1L184.6 261.3L186.3 264.1L181.1 263.4L182.9 268.7L186.3 269.7L185.7 272.6L183 272.4L180 280L175.7 281.7L172.3 281.1L172.3 284.2L171.3 283.8L167.3 288.5L164.8 288.2L162.9 291.9L156.9 296L156.7 301.4L158.8 306.1L158.1 310.2L156.3 311.7L154.4 311.3L151.3 314.3L150.1 312L151.9 310.7L151.5 309.7L152.3 310.4L151.9 308.8L145.6 309.6L142.6 313.1L143.3 315.3L141.6 318.8L135.1 319.5L132.5 321.6L127.6 319.7L123.2 315.5L121.6 315.6L120.7 318.1L116.4 317.4L114.9 313.5L107.4 312.7L108 309.2L102.3 307.1L96.4 309.7L88.6 296.7L86.4 295.9L90 286.1L89 285.3L89.6 280.8L98.2 273.5L97.7 271.3L101.7 265.3L100 261.3L94 260.8L94.4 257.6L90.2 255.7L90.6 252L86.9 246.6L88 242.6L84.6 240.9L78 232L86.5 233.1L99.2 231.6L100.3 224.3L103.6 221.2L105.2 213.8L102.1 208.6L99.3 207.9L99.3 202.7L105.2 200.4L109.5 202L111 200.5L112.2 201.8L116.3 200.4L118.3 196.4L128.7 190.6Z"/><path class="fm-ccaa" d="M263.4 145.5L266.6 149.1L270.8 148.1L274.3 151.2L275.9 150.8L274.6 152.7L276.3 153.1L275.6 154.6L278 154L282.7 159.4L285.2 157.9L286.5 159.5L290.1 157.4L292.4 158.1L294.1 156.3L297.1 158.8L297.5 154.5L301 153.5L314.9 165.7L314.5 168.7L317.7 172.3L317.5 183.5L315.4 185.2L312.2 183.7L311.7 189.1L307.1 193.8L311.5 197.8L310.2 198.7L310.6 200.1L311.8 198.4L317.7 204.5L321.8 204.2L321.1 207.7L323 209.2L324.3 213.6L332.7 213.9L333.6 215.9L331 217.4L331.3 221.8L328.3 228.1L328.9 230.1L322.6 232.4L320.9 236.5L318.5 237.9L319.4 240.5L318.2 242.8L321.2 245.8L321.1 247.7L322.8 246.7L325.9 249.1L332.7 250.3L332.1 255.5L328.7 263.8L333.5 270.2L340.9 269.4L342.3 272.1L342.2 277.7L340.9 278.2L342.7 282.3L340.8 284.4L338 284.4L334.5 280.1L332 279.2L325.6 283.3L324.7 281.9L323.3 282.6L319.4 290.8L320.2 298.9L315.8 302.4L312.6 302.3L311.9 299.5L309.6 298.7L303.1 303L300.1 303.9L297.4 302.6L294.9 306.1L290.9 308L285.8 317.2L277.4 314.2L281.6 308.9L282 304.7L280 302.9L280.1 297.8L276.5 296.9L276.8 293L275.6 291.9L272.3 292.7L268.7 290.8L264.2 295L260.9 294L259.4 297.3L256.9 293.7L253.9 295.7L246.4 293.4L244.5 293.8L244.4 295.7L241.4 297.7L238.4 297.3L237.8 295.4L236.2 295L235.6 297.8L228.1 296.4L222.9 299.3L209.3 297.6L208.1 300.7L201.5 297.7L191.3 288.8L185.2 286.6L184.5 282.8L179.4 282.4L177.8 280.6L180 280L181.9 274.1L183 272.4L185.7 272.6L186.4 269.9L182.9 268.7L181.1 263.4L186.3 264.1L184.6 261.3L187.2 256.1L193.7 257.8L191.3 255.6L189.2 249.8L191.3 249.4L192.8 244.4L192 243L184.8 247.3L179.7 244.3L171.6 235.7L174.1 229.3L172.7 227.4L173 224.9L169.5 227.4L167.3 227L168.3 221.6L166.7 220.1L163.4 220.8L165.1 215.4L164.9 209.3L166.2 208.4L172.8 210.1L178.9 206.2L179.1 208.7L181.4 208.2L182.6 205.6L187.3 202.2L187.5 200.1L191.7 199.8L192.1 203.4L193.4 204.2L198.5 204.1L202.1 202.2L204.4 197.9L205.6 202.2L207.3 202.9L211.9 199L213.7 201.7L216.6 200.7L221.5 204.6L227.4 205.3L228.7 207.2L232.8 207L235.2 208.8L234.1 212.3L229.7 215.5L230.4 216.3L224.5 218.2L226.9 220.4L239.3 211.9L243.5 212.7L246.1 210.2L248.5 212L252.4 209.7L253 211.1L255.9 210.8L257.4 209.3L255.6 207.1L256.8 206.3L255.6 200.4L254.4 200L252.5 202.3L251.6 201.1L254.3 193.4L251.5 191.5L251.5 187.7L250.3 186.4L247.6 186.5L248.1 184.9L246 181.9L246.8 180.4L245.7 181.3L243.8 178.4L243.3 179.6L240.8 178.6L241.7 174.8L239 173.4L241.9 168.9L241.1 167.3L243.7 162.4L241.9 160.2L242.5 158.1L240 157.5L237.9 153.9L243.4 151.3L242.9 148.2L249.3 149L251.5 146.6L257 148.2L261.8 146.1Z"/><path class="fm-ccaa" d="M269.4 34.6L271.6 37.2L279 38.7L285.3 42.8L291.3 42.2L294.2 43.4L302.4 41.1L307.7 37.8L307.8 40L309.9 41.2L310.2 43.1L308 43.5L307.6 45.5L304.1 47.6L302.8 46.7L303.3 51.3L298.5 55L297.9 59.4L290.1 61.9L290 66.9L288.2 69.6L288.9 71.5L286.5 72.7L287.9 76.3L284.1 77.4L282.8 75.9L279.4 78.3L281.3 80.9L283.6 79.2L283.7 83.5L282.6 85L278.8 84.9L279 83.3L278.2 85.2L275.7 85.8L275.2 84.2L273.6 85.3L272.4 83.1L271.2 83.5L272.2 79.4L268.9 78L266.5 81.5L266.7 78.5L263.6 76.3L263.4 74.3L260.2 73.8L257.5 70.6L253.6 71L254.5 69.3L253.1 68.5L254.9 64.1L251.9 65.2L251.3 67.4L248.3 65L250.5 61L255.8 63.6L260.2 61.5L257.1 58.2L252.4 57.2L253.8 56.8L253.2 54.5L254.1 53.3L252.2 52.1L253.6 49.3L250.5 49.5L249.4 48L242.8 51.4L241.5 46.2L246.2 42.7L250.5 42.3L251.1 43.6L253.2 42.7L253.4 40L256.1 38.7L255.3 39.4L258.6 41.4L257.9 39L261.6 35.7L267.2 36Z"/></g>
+        <g class="fm-cerrados"><circle class="fm-off" cx="271.1" cy="65.8" r="1.7"/><circle class="fm-off" cx="272.8" cy="65.2" r="1.7"/><circle class="fm-off" cx="257.5" cy="71.1" r="1.7"/><circle class="fm-off" cx="271" cy="66.1" r="1.7"/><circle class="fm-off" cx="276" cy="84" r="1.7"/><circle class="fm-off" cx="315.3" cy="278.8" r="1.7"/><circle class="fm-off" cx="303.5" cy="265.2" r="1.7"/><circle class="fm-off" cx="307.4" cy="264.2" r="1.7"/><circle class="fm-off" cx="354.5" cy="302.9" r="1.7"/><circle class="fm-off" cx="357.7" cy="297.9" r="1.7"/><circle class="fm-off" cx="357.1" cy="307.2" r="1.7"/><circle class="fm-off" cx="344.8" cy="289.3" r="1.7"/><circle class="fm-off" cx="360.2" cy="292.9" r="1.7"/><circle class="fm-off" cx="373.7" cy="287.5" r="1.7"/><circle class="fm-off" cx="341.4" cy="310.8" r="1.7"/><circle class="fm-off" cx="362.4" cy="296.4" r="1.7"/><circle class="fm-off" cx="358.5" cy="301.4" r="1.7"/><circle class="fm-off" cx="348" cy="295.7" r="1.7"/><circle class="fm-off" cx="350.4" cy="287.5" r="1.7"/><circle class="fm-off" cx="347.6" cy="292.5" r="1.7"/><circle class="fm-off" cx="262.6" cy="379.2" r="1.7"/><circle class="fm-off" cx="125" cy="261.6" r="1.7"/><circle class="fm-off" cx="99.6" cy="270.8" r="1.7"/><circle class="fm-off" cx="172.3" cy="251.3" r="1.7"/><circle class="fm-off" cx="147.2" cy="267.7" r="1.7"/><circle class="fm-off" cx="110.8" cy="270.2" r="1.7"/><circle class="fm-off" cx="456.5" cy="122.5" r="1.7"/><circle class="fm-off" cx="463" cy="137.6" r="1.7"/><circle class="fm-off" cx="463.3" cy="142.8" r="1.7"/><circle class="fm-off" cx="447.9" cy="149.2" r="1.7"/><circle class="fm-off" cx="460.3" cy="145.5" r="1.7"/><circle class="fm-off" cx="462.2" cy="142" r="1.7"/><circle class="fm-off" cx="442.8" cy="128.7" r="1.7"/><circle class="fm-off" cx="466.6" cy="139.2" r="1.7"/><circle class="fm-off" cx="460.7" cy="145" r="1.7"/><circle class="fm-off" cx="477.9" cy="125.7" r="1.7"/><circle class="fm-off" cx="462.1" cy="137.1" r="1.7"/><circle class="fm-off" cx="467.8" cy="135.8" r="1.7"/><circle class="fm-off" cx="447.4" cy="143.5" r="1.7"/><circle class="fm-off" cx="452.3" cy="135.2" r="1.7"/><circle class="fm-off" cx="466" cy="133.9" r="1.7"/><circle class="fm-off" cx="459.5" cy="137.8" r="1.7"/><circle class="fm-off" cx="464.6" cy="144.6" r="1.7"/><circle class="fm-off" cx="458.6" cy="141.3" r="1.7"/><circle class="fm-off" cx="463.8" cy="142.5" r="1.7"/><circle class="fm-off" cx="445.4" cy="151.5" r="1.7"/><circle class="fm-off" cx="464.3" cy="144.5" r="1.7"/><circle class="fm-off" cx="463.1" cy="144.4" r="1.7"/><circle class="fm-off" cx="464.6" cy="142.3" r="1.7"/><circle class="fm-off" cx="464.4" cy="145.6" r="1.7"/><circle class="fm-off" cx="468.2" cy="140.5" r="1.7"/><circle class="fm-off" cx="467.5" cy="120.4" r="1.7"/><circle class="fm-off" cx="453.3" cy="101.3" r="1.7"/><circle class="fm-off" cx="458.5" cy="139.3" r="1.7"/><circle class="fm-off" cx="442.4" cy="149.1" r="1.7"/><circle class="fm-off" cx="454.8" cy="136" r="1.7"/><circle class="fm-off" cx="461.3" cy="147" r="1.7"/><circle class="fm-off" cx="463.2" cy="146.1" r="1.7"/><circle class="fm-off" cx="469.5" cy="138.4" r="1.7"/><circle class="fm-off" cx="466.7" cy="138.5" r="1.7"/><circle class="fm-off" cx="468.4" cy="140.2" r="1.7"/><circle class="fm-off" cx="467" cy="139.1" r="1.7"/><circle class="fm-off" cx="455.2" cy="143.9" r="1.7"/><circle class="fm-off" cx="460" cy="137.7" r="1.7"/><circle class="fm-off" cx="468.4" cy="138.2" r="1.7"/><circle class="fm-off" cx="465.8" cy="141.2" r="1.7"/><circle class="fm-off" cx="460.2" cy="145.5" r="1.7"/><circle class="fm-off" cx="466.4" cy="142" r="1.7"/><circle class="fm-off" cx="464.3" cy="146.1" r="1.7"/><circle class="fm-off" cx="437" cy="127.1" r="1.7"/><circle class="fm-off" cx="461.4" cy="133.7" r="1.7"/><circle class="fm-off" cx="466.5" cy="132.9" r="1.7"/><circle class="fm-off" cx="466.9" cy="140.2" r="1.7"/><circle class="fm-off" cx="470.3" cy="112.6" r="1.7"/><circle class="fm-off" cx="463.5" cy="130.2" r="1.7"/><circle class="fm-off" cx="451.9" cy="140.2" r="1.7"/><circle class="fm-off" cx="466.8" cy="141.5" r="1.7"/><circle class="fm-off" cx="469.3" cy="138.4" r="1.7"/><circle class="fm-off" cx="466.6" cy="139.1" r="1.7"/><circle class="fm-off" cx="464.9" cy="142.2" r="1.7"/><circle class="fm-off" cx="466.3" cy="140.7" r="1.7"/><circle class="fm-off" cx="461" cy="133.6" r="1.7"/><circle class="fm-off" cx="465.9" cy="143" r="1.7"/><circle class="fm-off" cx="461.3" cy="145.1" r="1.7"/><circle class="fm-off" cx="466.8" cy="140.2" r="1.7"/><circle class="fm-off" cx="225.2" cy="79.7" r="1.7"/><circle class="fm-off" cx="233.5" cy="72.2" r="1.7"/><circle class="fm-off" cx="262.6" cy="74.2" r="1.7"/><circle class="fm-off" cx="250.9" cy="70" r="1.7"/><circle class="fm-off" cx="234" cy="66" r="1.7"/><circle class="fm-off" cx="237.5" cy="74.9" r="1.7"/><circle class="fm-off" cx="153.1" cy="223.8" r="1.7"/><circle class="fm-off" cx="125.5" cy="241.6" r="1.7"/><circle class="fm-off" cx="144.1" cy="242.8" r="1.7"/><circle class="fm-off" cx="104.7" cy="228.8" r="1.7"/><circle class="fm-off" cx="122.7" cy="240.1" r="1.7"/><circle class="fm-off" cx="135.9" cy="213.3" r="1.7"/><circle class="fm-off" cx="156.1" cy="217" r="1.7"/><circle class="fm-off" cx="151.5" cy="215.8" r="1.7"/><circle class="fm-off" cx="164.1" cy="413.1" r="1.7"/><circle class="fm-off" cx="163.2" cy="409.7" r="1.7"/><circle class="fm-off" cx="151" cy="415" r="1.7"/><circle class="fm-off" cx="162.9" cy="413" r="1.7"/><circle class="fm-off" cx="134.9" cy="390.4" r="1.7"/><circle class="fm-off" cx="161.6" cy="411.5" r="1.7"/><circle class="fm-off" cx="155.1" cy="418.8" r="1.7"/><circle class="fm-off" cx="127.7" cy="387.7" r="1.7"/><circle class="fm-off" cx="133.5" cy="395.7" r="1.7"/><circle class="fm-off" cx="375.4" cy="216.2" r="1.7"/><circle class="fm-off" cx="370.4" cy="225.2" r="1.7"/><circle class="fm-off" cx="378.6" cy="217" r="1.7"/><circle class="fm-off" cx="372.1" cy="218.2" r="1.7"/><circle class="fm-off" cx="378.6" cy="215.6" r="1.7"/><circle class="fm-off" cx="375.8" cy="214.3" r="1.7"/><circle class="fm-off" cx="379.1" cy="216.6" r="1.7"/><circle class="fm-off" cx="377" cy="216.2" r="1.7"/><circle class="fm-off" cx="371.4" cy="182.7" r="1.7"/><circle class="fm-off" cx="361" cy="223.4" r="1.7"/><circle class="fm-off" cx="244.5" cy="265.4" r="1.7"/><circle class="fm-off" cx="215.2" cy="265.4" r="1.7"/><circle class="fm-off" cx="239.8" cy="253.8" r="1.7"/><circle class="fm-off" cx="178.8" cy="331.5" r="1.7"/><circle class="fm-off" cx="199.2" cy="308.6" r="1.7"/><circle class="fm-off" cx="187.1" cy="325.9" r="1.7"/><circle class="fm-off" cx="191.2" cy="322.8" r="1.7"/><circle class="fm-off" cx="191.9" cy="322.4" r="1.7"/><circle class="fm-off" cx="42.7" cy="40.5" r="1.7"/><circle class="fm-off" cx="39.9" cy="41.2" r="1.7"/><circle class="fm-off" cx="26.1" cy="67.2" r="1.7"/><circle class="fm-off" cx="43.8" cy="39.3" r="1.7"/><circle class="fm-off" cx="44" cy="40.5" r="1.7"/><circle class="fm-off" cx="43.5" cy="49.6" r="1.7"/><circle class="fm-off" cx="296" cy="233.3" r="1.7"/><circle class="fm-off" cx="286.5" cy="212.9" r="1.7"/><circle class="fm-off" cx="276.6" cy="221.7" r="1.7"/><circle class="fm-off" cx="316.8" cy="239.2" r="1.7"/><circle class="fm-off" cx="312.3" cy="101.5" r="1.7"/><circle class="fm-off" cx="261.9" cy="211.4" r="1.7"/><circle class="fm-off" cx="256.3" cy="212.7" r="1.7"/><circle class="fm-off" cx="276.7" cy="225.9" r="1.7"/><circle class="fm-off" cx="494.3" cy="107.1" r="1.7"/><circle class="fm-off" cx="361.1" cy="244.5" r="1.7"/><circle class="fm-off" cx="486.9" cy="111.8" r="1.7"/><circle class="fm-off" cx="484.5" cy="117.4" r="1.7"/><circle class="fm-off" cx="495" cy="109.2" r="1.7"/><circle class="fm-off" cx="487.6" cy="119.8" r="1.7"/><circle class="fm-off" cx="496.9" cy="98.4" r="1.7"/><circle class="fm-off" cx="232.7" cy="363" r="1.7"/><circle class="fm-off" cx="234.9" cy="372.5" r="1.7"/><circle class="fm-off" cx="242.7" cy="376" r="1.7"/><circle class="fm-off" cx="231.6" cy="358.8" r="1.7"/><circle class="fm-off" cx="224.1" cy="358.1" r="1.7"/><circle class="fm-off" cx="236.5" cy="360.3" r="1.7"/><circle class="fm-off" cx="269.7" cy="181.9" r="1.7"/><circle class="fm-off" cx="260.1" cy="175.6" r="1.7"/><circle class="fm-off" cx="274.4" cy="177.9" r="1.7"/><circle class="fm-off" cx="266.3" cy="195.5" r="1.7"/><circle class="fm-off" cx="264" cy="196.3" r="1.7"/><circle class="fm-off" cx="289.7" cy="56.1" r="1.7"/><circle class="fm-off" cx="305.7" cy="42.5" r="1.7"/><circle class="fm-off" cx="306.9" cy="40.8" r="1.7"/><circle class="fm-off" cx="91.5" cy="354.6" r="1.7"/><circle class="fm-off" cx="102" cy="359.3" r="1.7"/><circle class="fm-off" cx="103.7" cy="360.6" r="1.7"/><circle class="fm-off" cx="102.8" cy="355" r="1.7"/><circle class="fm-off" cx="104.5" cy="360.9" r="1.7"/><circle class="fm-off" cx="117.3" cy="350.1" r="1.7"/><circle class="fm-off" cx="387.1" cy="82.2" r="1.7"/><circle class="fm-off" cx="364.9" cy="83.5" r="1.7"/><circle class="fm-off" cx="375.2" cy="135.1" r="1.7"/><circle class="fm-off" cx="366.6" cy="77.7" r="1.7"/><circle class="fm-off" cx="387" cy="114.4" r="1.7"/><circle class="fm-off" cx="356.4" cy="99.2" r="1.7"/><circle class="fm-off" cx="393.3" cy="89.1" r="1.7"/><circle class="fm-off" cx="386.2" cy="113.9" r="1.7"/><circle class="fm-off" cx="409.4" cy="80.8" r="1.7"/><circle class="fm-off" cx="387.7" cy="94.1" r="1.7"/><circle class="fm-off" cx="388.5" cy="102.4" r="1.7"/><circle class="fm-off" cx="398.9" cy="79.8" r="1.7"/><circle class="fm-off" cx="385" cy="86" r="1.7"/><circle class="fm-off" cx="348.3" cy="108.4" r="1.7"/><circle class="fm-off" cx="398" cy="82.1" r="1.7"/><circle class="fm-off" cx="219.7" cy="316.3" r="1.7"/><circle class="fm-off" cx="152.9" cy="66.3" r="1.7"/><circle class="fm-off" cx="156.7" cy="81.6" r="1.7"/><circle class="fm-off" cx="154.3" cy="69.1" r="1.7"/><circle class="fm-off" cx="164.8" cy="87" r="1.7"/><circle class="fm-off" cx="399.4" cy="142.2" r="1.7"/><circle class="fm-off" cx="405.9" cy="130.6" r="1.7"/><circle class="fm-off" cx="418.1" cy="97.4" r="1.7"/><circle class="fm-off" cx="408.7" cy="89.4" r="1.7"/><circle class="fm-off" cx="418.8" cy="84" r="1.7"/><circle class="fm-off" cx="429.5" cy="76.8" r="1.7"/><circle class="fm-off" cx="412.3" cy="134.8" r="1.7"/><circle class="fm-off" cx="398.9" cy="136.4" r="1.7"/><circle class="fm-off" cx="434.9" cy="93.6" r="1.7"/><circle class="fm-off" cx="404.1" cy="132.4" r="1.7"/><circle class="fm-off" cx="427.6" cy="84.6" r="1.7"/><circle class="fm-off" cx="420.4" cy="102.8" r="1.7"/><circle class="fm-off" cx="420.9" cy="103.9" r="1.7"/><circle class="fm-off" cx="264.1" cy="80.8" r="1.7"/><circle class="fm-off" cx="279.8" cy="86.6" r="1.7"/><circle class="fm-off" cx="56.5" cy="32.6" r="1.7"/><circle class="fm-off" cx="63.2" cy="35.3" r="1.7"/><circle class="fm-off" cx="233.5" cy="185.9" r="1.7"/><circle class="fm-off" cx="237.4" cy="183.6" r="1.7"/><circle class="fm-off" cx="229.5" cy="198.3" r="1.7"/><circle class="fm-off" cx="235.3" cy="191.1" r="1.7"/><circle class="fm-off" cx="236.5" cy="192.5" r="1.7"/><circle class="fm-off" cx="233.1" cy="188.9" r="1.7"/><circle class="fm-off" cx="241.8" cy="201.2" r="1.7"/><circle class="fm-off" cx="231.5" cy="189.8" r="1.7"/><circle class="fm-off" cx="229.9" cy="201.3" r="1.7"/><circle class="fm-off" cx="230.6" cy="200.8" r="1.7"/><circle class="fm-off" cx="230.6" cy="197" r="1.7"/><circle class="fm-off" cx="232.7" cy="187.5" r="1.7"/><circle class="fm-off" cx="230.6" cy="183.2" r="1.7"/><circle class="fm-off" cx="224.2" cy="196.7" r="1.7"/><circle class="fm-off" cx="224.5" cy="200.9" r="1.7"/><circle class="fm-off" cx="242.6" cy="194.3" r="1.7"/><circle class="fm-off" cx="223.2" cy="193.3" r="1.7"/><circle class="fm-off" cx="232.5" cy="193.8" r="1.7"/><circle class="fm-off" cx="231.4" cy="191.6" r="1.7"/><circle class="fm-off" cx="232" cy="189.5" r="1.7"/><circle class="fm-off" cx="228.2" cy="196.4" r="1.7"/><circle class="fm-off" cx="229.6" cy="195.5" r="1.7"/><circle class="fm-off" cx="231.1" cy="200.1" r="1.7"/><circle class="fm-off" cx="233" cy="189.9" r="1.7"/><circle class="fm-off" cx="228.4" cy="198.1" r="1.7"/><circle class="fm-off" cx="230.8" cy="188.9" r="1.7"/><circle class="fm-off" cx="235.7" cy="186.6" r="1.7"/><circle class="fm-off" cx="231.8" cy="191.1" r="1.7"/><circle class="fm-off" cx="232.1" cy="189" r="1.7"/><circle class="fm-off" cx="229.8" cy="191.9" r="1.7"/><circle class="fm-off" cx="235.6" cy="187.9" r="1.7"/><circle class="fm-off" cx="234.9" cy="191.9" r="1.7"/><circle class="fm-off" cx="239.5" cy="178.4" r="1.7"/><circle class="fm-off" cx="230.7" cy="193.1" r="1.7"/><circle class="fm-off" cx="246.9" cy="186.3" r="1.7"/><circle class="fm-off" cx="231.9" cy="193.3" r="1.7"/><circle class="fm-off" cx="230.7" cy="193.3" r="1.7"/><circle class="fm-off" cx="240.2" cy="191.5" r="1.7"/><circle class="fm-off" cx="241.1" cy="198.8" r="1.7"/><circle class="fm-off" cx="231.4" cy="193.9" r="1.7"/><circle class="fm-off" cx="231.8" cy="194.5" r="1.7"/><circle class="fm-off" cx="226.9" cy="199.3" r="1.7"/><circle class="fm-off" cx="234.7" cy="190.1" r="1.7"/><circle class="fm-off" cx="223.3" cy="196.4" r="1.7"/><circle class="fm-off" cx="247.6" cy="190.3" r="1.7"/><circle class="fm-off" cx="230.8" cy="194.4" r="1.7"/><circle class="fm-off" cx="227.3" cy="190.3" r="1.7"/><circle class="fm-off" cx="231.4" cy="196.2" r="1.7"/><circle class="fm-off" cx="234.7" cy="194.2" r="1.7"/><circle class="fm-off" cx="229.1" cy="193.6" r="1.7"/><circle class="fm-off" cx="232.8" cy="196.7" r="1.7"/><circle class="fm-off" cx="232.8" cy="196.7" r="1.7"/><circle class="fm-off" cx="231.3" cy="182.3" r="1.7"/><circle class="fm-off" cx="231.3" cy="182.4" r="1.7"/><circle class="fm-off" cx="233.7" cy="206" r="1.7"/><circle class="fm-off" cx="223.8" cy="189.1" r="1.7"/><circle class="fm-off" cx="231.5" cy="192.1" r="1.7"/><circle class="fm-off" cx="228.9" cy="202.9" r="1.7"/><circle class="fm-off" cx="239.2" cy="191.4" r="1.7"/><circle class="fm-off" cx="234.4" cy="191.8" r="1.7"/><circle class="fm-off" cx="235.7" cy="185" r="1.7"/><circle class="fm-off" cx="229.7" cy="205.3" r="1.7"/><circle class="fm-off" cx="246" cy="185.7" r="1.7"/><circle class="fm-off" cx="229" cy="194.7" r="1.7"/><circle class="fm-off" cx="226" cy="197.5" r="1.7"/><circle class="fm-off" cx="232.9" cy="191.1" r="1.7"/><circle class="fm-off" cx="238.9" cy="191.1" r="1.7"/><circle class="fm-off" cx="231.9" cy="197.9" r="1.7"/><circle class="fm-off" cx="232.9" cy="192.7" r="1.7"/><circle class="fm-off" cx="235" cy="197.9" r="1.7"/><circle class="fm-off" cx="224.2" cy="191.1" r="1.7"/><circle class="fm-off" cx="232.8" cy="192.1" r="1.7"/><circle class="fm-off" cx="230.7" cy="192.5" r="1.7"/><circle class="fm-off" cx="240.4" cy="185.7" r="1.7"/><circle class="fm-off" cx="228.3" cy="200.1" r="1.7"/><circle class="fm-off" cx="234.6" cy="186.6" r="1.7"/><circle class="fm-off" cx="219.4" cy="183.3" r="1.7"/><circle class="fm-off" cx="196.6" cy="388.5" r="1.7"/><circle class="fm-off" cx="185.2" cy="395.4" r="1.7"/><circle class="fm-off" cx="204" cy="383.8" r="1.7"/><circle class="fm-off" cx="200.7" cy="384.6" r="1.7"/><circle class="fm-off" cx="177.7" cy="395.8" r="1.7"/><circle class="fm-off" cx="203" cy="364.3" r="1.7"/><circle class="fm-off" cx="201.5" cy="383.5" r="1.7"/><circle class="fm-off" cx="170.8" cy="401.5" r="1.7"/><circle class="fm-off" cx="200.9" cy="386.5" r="1.7"/><circle class="fm-off" cx="332.8" cy="318" r="1.7"/><circle class="fm-off" cx="310.6" cy="347.8" r="1.7"/><circle class="fm-off" cx="330.7" cy="326.9" r="1.7"/><circle class="fm-off" cx="333.9" cy="320.4" r="1.7"/><circle class="fm-off" cx="314" cy="69.5" r="1.7"/><circle class="fm-off" cx="313.2" cy="75.6" r="1.7"/><circle class="fm-off" cx="312.2" cy="88.9" r="1.7"/><circle class="fm-off" cx="328.3" cy="79.3" r="1.7"/><circle class="fm-off" cx="311" cy="67.8" r="1.7"/><circle class="fm-off" cx="312.7" cy="105.3" r="1.7"/><circle class="fm-off" cx="312" cy="84.3" r="1.7"/><circle class="fm-off" cx="298.3" cy="75" r="1.7"/><circle class="fm-off" cx="314.7" cy="107.8" r="1.7"/><circle class="fm-off" cx="52.2" cy="102.4" r="1.7"/><circle class="fm-off" cx="143.8" cy="28.4" r="1.7"/><circle class="fm-off" cx="150.5" cy="29.4" r="1.7"/><circle class="fm-off" cx="150.6" cy="31.3" r="1.7"/><circle class="fm-off" cx="146.1" cy="28.8" r="1.7"/><circle class="fm-off" cx="199.6" cy="110.5" r="1.7"/><circle class="fm-off" cx="197.3" cy="106.6" r="1.7"/><circle class="fm-off" cx="204.3" cy="116.2" r="1.7"/><circle class="fm-off" cx="56.5" cy="99.8" r="1.7"/><circle class="fm-off" cx="34.2" cy="80" r="1.7"/><circle class="fm-off" cx="34.8" cy="90.3" r="1.7"/><circle class="fm-off" cx="35" cy="103.2" r="1.7"/><circle class="fm-off" cx="33.3" cy="88.7" r="1.7"/><circle class="fm-off" cx="47.4" cy="103.9" r="1.7"/><circle class="fm-off" cx="36.3" cy="96.7" r="1.7"/><circle class="fm-off" cx="152.1" cy="163" r="1.7"/><circle class="fm-off" cx="120.2" cy="149.2" r="1.7"/><circle class="fm-off" cx="144.7" cy="152.2" r="1.7"/><circle class="fm-off" cx="224.8" cy="35.7" r="1.7"/><circle class="fm-off" cx="226.5" cy="37.8" r="1.7"/><circle class="fm-off" cx="213" cy="165.6" r="1.7"/><circle class="fm-off" cx="211.2" cy="172.7" r="1.7"/><circle class="fm-off" cx="208.6" cy="166.9" r="1.7"/><circle class="fm-off" cx="206" cy="168.7" r="1.7"/><circle class="fm-off" cx="145.5" cy="350.5" r="1.7"/><circle class="fm-off" cx="135.9" cy="352.6" r="1.7"/><circle class="fm-off" cx="139.2" cy="350.2" r="1.7"/><circle class="fm-off" cx="142.5" cy="350.3" r="1.7"/><circle class="fm-off" cx="138.1" cy="348.4" r="1.7"/><circle class="fm-off" cx="129.1" cy="347.6" r="1.7"/><circle class="fm-off" cx="141.9" cy="354.2" r="1.7"/><circle class="fm-off" cx="141.6" cy="352.4" r="1.7"/><circle class="fm-off" cx="145.4" cy="351.9" r="1.7"/><circle class="fm-off" cx="294.6" cy="117" r="1.7"/><circle class="fm-off" cx="289.5" cy="112.3" r="1.7"/><circle class="fm-off" cx="291.4" cy="112.8" r="1.7"/><circle class="fm-off" cx="302.4" cy="123.6" r="1.7"/><circle class="fm-off" cx="428.1" cy="155.4" r="1.7"/><circle class="fm-off" cx="430.4" cy="151.8" r="1.7"/><circle class="fm-off" cx="430.4" cy="151.7" r="1.7"/><circle class="fm-off" cx="425.2" cy="151.5" r="1.7"/><circle class="fm-off" cx="403.7" cy="173.5" r="1.7"/><circle class="fm-off" cx="427.1" cy="156.5" r="1.7"/><circle class="fm-off" cx="424.1" cy="141.4" r="1.7"/><circle class="fm-off" cx="424.5" cy="141.8" r="1.7"/><circle class="fm-off" cx="429.1" cy="152.3" r="1.7"/><circle class="fm-off" cx="396.4" cy="149.8" r="1.7"/><circle class="fm-off" cx="404.9" cy="156.3" r="1.7"/><circle class="fm-off" cx="425.7" cy="156.4" r="1.7"/><circle class="fm-off" cx="426.3" cy="147.4" r="1.7"/><circle class="fm-off" cx="426.8" cy="156.8" r="1.7"/><circle class="fm-off" cx="414.3" cy="163.7" r="1.7"/><circle class="fm-off" cx="413.8" cy="165" r="1.7"/><circle class="fm-off" cx="430.8" cy="147.7" r="1.7"/><circle class="fm-off" cx="428.1" cy="151.9" r="1.7"/><circle class="fm-off" cx="402" cy="151.8" r="1.7"/><circle class="fm-off" cx="327.9" cy="166.9" r="1.7"/><circle class="fm-off" cx="364" cy="161.2" r="1.7"/><circle class="fm-off" cx="345.7" cy="160.7" r="1.7"/><circle class="fm-off" cx="344" cy="173.2" r="1.7"/><circle class="fm-off" cx="368" cy="151.1" r="1.7"/><circle class="fm-off" cx="345.3" cy="176.8" r="1.7"/><circle class="fm-off" cx="346.7" cy="173" r="1.7"/><circle class="fm-off" cx="362.5" cy="153.4" r="1.7"/><circle class="fm-off" cx="334.7" cy="191.4" r="1.7"/><circle class="fm-off" cx="180.2" cy="221.1" r="1.7"/><circle class="fm-off" cx="215.3" cy="210.1" r="1.7"/><circle class="fm-off" cx="224.5" cy="211.7" r="1.7"/><circle class="fm-off" cx="226.7" cy="207.6" r="1.7"/><circle class="fm-off" cx="225.2" cy="217.5" r="1.7"/><circle class="fm-off" cx="238.3" cy="241.2" r="1.7"/><circle class="fm-off" cx="186.7" cy="214.3" r="1.7"/><circle class="fm-off" cx="208.8" cy="214.5" r="1.7"/><circle class="fm-off" cx="226" cy="215.5" r="1.7"/><circle class="fm-off" cx="188.1" cy="216.3" r="1.7"/><circle class="fm-off" cx="236.3" cy="241.3" r="1.7"/><circle class="fm-off" cx="337.1" cy="255.4" r="1.7"/><circle class="fm-off" cx="364.3" cy="243.6" r="1.7"/><circle class="fm-off" cx="371.8" cy="267.4" r="1.7"/><circle class="fm-off" cx="369.8" cy="233.1" r="1.7"/><circle class="fm-off" cx="339.8" cy="242.6" r="1.7"/><circle class="fm-off" cx="372.2" cy="268.4" r="1.7"/><circle class="fm-off" cx="356.8" cy="253.4" r="1.7"/><circle class="fm-off" cx="358.8" cy="237.6" r="1.7"/><circle class="fm-off" cx="363.2" cy="256.9" r="1.7"/><circle class="fm-off" cx="362.9" cy="240.8" r="1.7"/><circle class="fm-off" cx="360.9" cy="258.7" r="1.7"/><circle class="fm-off" cx="361.5" cy="245.8" r="1.7"/><circle class="fm-off" cx="361" cy="258.7" r="1.7"/><circle class="fm-off" cx="339" cy="264.3" r="1.7"/><circle class="fm-off" cx="365.4" cy="242.8" r="1.7"/><circle class="fm-off" cx="369.5" cy="232.7" r="1.7"/><circle class="fm-off" cx="368.1" cy="263.3" r="1.7"/><circle class="fm-off" cx="358.4" cy="263.3" r="1.7"/><circle class="fm-off" cx="364" cy="242.6" r="1.7"/><circle class="fm-off" cx="363.6" cy="242.8" r="1.7"/><circle class="fm-off" cx="366.6" cy="232.2" r="1.7"/><circle class="fm-off" cx="342" cy="253.8" r="1.7"/><circle class="fm-off" cx="363.1" cy="243.2" r="1.7"/><circle class="fm-off" cx="368.5" cy="231.5" r="1.7"/><circle class="fm-off" cx="171.5" cy="124" r="1.7"/><circle class="fm-off" cx="179.1" cy="136.1" r="1.7"/><circle class="fm-off" cx="189.9" cy="128.7" r="1.7"/><circle class="fm-off" cx="190.5" cy="145.8" r="1.7"/><circle class="fm-off" cx="183.2" cy="145.4" r="1.7"/><circle class="fm-off" cx="187.1" cy="129.2" r="1.7"/><circle class="fm-off" cx="182.2" cy="121.3" r="1.7"/><circle class="fm-off" cx="192.5" cy="128.9" r="1.7"/><circle class="fm-off" cx="264.2" cy="46.8" r="1.7"/><circle class="fm-off" cx="264.9" cy="42.7" r="1.7"/><circle class="fm-off" cx="268.9" cy="46.7" r="1.7"/><circle class="fm-off" cx="264.2" cy="47.8" r="1.7"/><circle class="fm-off" cx="165" cy="139" r="1.7"/><circle class="fm-off" cx="150.3" cy="134.6" r="1.7"/><circle class="fm-off" cx="345.5" cy="133.6" r="1.7"/><circle class="fm-off" cx="325.2" cy="135.5" r="1.7"/><circle class="fm-off" cx="340.2" cy="144.9" r="1.7"/><circle class="fm-off" cx="338.8" cy="136.1" r="1.7"/><circle class="fm-off" cx="339.4" cy="129.7" r="1.7"/><circle class="fm-off" cx="345.1" cy="131.4" r="1.7"/><circle class="fm-off" cx="349.6" cy="124.9" r="1.7"/><circle class="fm-off" cx="327.5" cy="128.6" r="1.7"/><circle class="fm-off" cx="311.7" cy="117.6" r="1.7"/><circle class="fm-off" cx="327.8" cy="126.1" r="1.7"/><circle class="fm-off" cx="344.4" cy="126.5" r="1.7"/><circle class="fm-off" cx="333.8" cy="136.8" r="1.7"/><circle class="fm-off" cx="324.1" cy="118.4" r="1.7"/><circle class="fm-off" cx="347.7" cy="132.8" r="1.7"/><circle class="fm-off" cx="345.6" cy="131.7" r="1.7"/><circle class="fm-off" cx="331.9" cy="123.5" r="1.7"/><circle class="fm-off" cx="365.6" cy="147.1" r="1.7"/><circle class="fm-off" cx="352.1" cy="134.2" r="1.7"/><circle class="fm-off" cx="311.1" cy="145.7" r="1.7"/><circle class="fm-off" cx="345.4" cy="123.8" r="1.7"/><circle class="fm-off" cx="330.2" cy="145.6" r="1.7"/><circle class="fm-off" cx="390.3" cy="143.3" r="1.7"/><circle class="fm-off" cx="165.9" cy="428.7" r="1.7"/><circle class="fm-off" cx="75.3" cy="420.7" r="1.7"/><circle class="fm-off" cx="76.2" cy="413.9" r="1.7"/><circle class="fm-off" cx="73.9" cy="416.7" r="1.7"/><circle class="fm-off" cx="72.5" cy="422.8" r="1.7"/><circle class="fm-off" cx="76.5" cy="419.1" r="1.7"/><circle class="fm-off" cx="119.3" cy="387.9" r="1.7"/><circle class="fm-off" cx="75" cy="414.3" r="1.7"/><circle class="fm-off" cx="77.4" cy="417.5" r="1.7"/><circle class="fm-off" cx="105.8" cy="410.9" r="1.7"/><circle class="fm-off" cx="76.2" cy="421.8" r="1.7"/><circle class="fm-off" cx="76" cy="419.7" r="1.7"/><circle class="fm-off" cx="72.3" cy="413.7" r="1.7"/><circle class="fm-off" cx="76.8" cy="420.3" r="1.7"/><circle class="fm-off" cx="76.2" cy="415.1" r="1.7"/><circle class="fm-off" cx="102.3" cy="412.8" r="1.7"/><circle class="fm-off" cx="69.2" cy="421.2" r="1.7"/><circle class="fm-off" cx="107.6" cy="411.1" r="1.7"/><circle class="fm-off" cx="76.3" cy="417.2" r="1.7"/><circle class="fm-off" cx="70.9" cy="422.8" r="1.7"/><circle class="fm-off" cx="75.9" cy="414.6" r="1.7"/><circle class="fm-off" cx="76.6" cy="416.2" r="1.7"/><circle class="fm-off" cx="101.8" cy="413.9" r="1.7"/><circle class="fm-off" cx="76.2" cy="421.7" r="1.7"/><circle class="fm-off" cx="76.7" cy="413.1" r="1.7"/><circle class="fm-off" cx="57.8" cy="405.5" r="1.7"/><circle class="fm-off" cx="55.8" cy="407.3" r="1.7"/><circle class="fm-off" cx="52.8" cy="406.4" r="1.7"/><circle class="fm-off" cx="47.3" cy="413.8" r="1.7"/><circle class="fm-off" cx="51.1" cy="407.3" r="1.7"/><circle class="fm-off" cx="46" cy="411.3" r="1.7"/><circle class="fm-off" cx="23" cy="405.3" r="1.7"/><circle class="fm-off" cx="52.7" cy="414.9" r="1.7"/><circle class="fm-off" cx="24.7" cy="400.2" r="1.7"/><circle class="fm-off" cx="24.6" cy="400.8" r="1.7"/><circle class="fm-off" cx="46" cy="411.3" r="1.7"/><circle class="fm-off" cx="53.9" cy="412.9" r="1.7"/><circle class="fm-off" cx="56.2" cy="405.6" r="1.7"/><circle class="fm-off" cx="52.8" cy="414.8" r="1.7"/><circle class="fm-off" cx="57.2" cy="405.2" r="1.7"/><circle class="fm-off" cx="55.9" cy="407.3" r="1.7"/><circle class="fm-off" cx="34.9" cy="414.1" r="1.7"/><circle class="fm-off" cx="21.4" cy="400.2" r="1.7"/><circle class="fm-off" cx="53.9" cy="412.9" r="1.7"/><circle class="fm-off" cx="51.6" cy="415" r="1.7"/><circle class="fm-off" cx="59.3" cy="404.4" r="1.7"/><circle class="fm-off" cx="56.8" cy="405.4" r="1.7"/><circle class="fm-off" cx="57.7" cy="405.1" r="1.7"/><circle class="fm-off" cx="52.7" cy="414.9" r="1.7"/><circle class="fm-off" cx="504.8" cy="223" r="1.7"/><circle class="fm-off" cx="487.2" cy="230.9" r="1.7"/><circle class="fm-off" cx="491.6" cy="245.2" r="1.7"/><circle class="fm-off" cx="513.5" cy="236.2" r="1.7"/><circle class="fm-off" cx="479.3" cy="239.1" r="1.7"/><circle class="fm-off" cx="491.2" cy="232.5" r="1.7"/><circle class="fm-off" cx="479.4" cy="238.6" r="1.7"/><circle class="fm-off" cx="503.7" cy="247.4" r="1.7"/><circle class="fm-off" cx="487.1" cy="238" r="1.7"/><circle class="fm-off" cx="502.7" cy="224.2" r="1.7"/><circle class="fm-off" cx="484.4" cy="236.7" r="1.7"/><circle class="fm-off" cx="438.7" cy="266.2" r="1.7"/><circle class="fm-off" cx="484.3" cy="235.7" r="1.7"/><circle class="fm-off" cx="500.3" cy="226.8" r="1.7"/><circle class="fm-off" cx="494.9" cy="229.6" r="1.7"/><circle class="fm-off" cx="434.2" cy="271.5" r="1.7"/><circle class="fm-off" cx="484.6" cy="236.3" r="1.7"/><circle class="fm-off" cx="437.7" cy="282.5" r="1.7"/><circle class="fm-off" cx="500.6" cy="231.4" r="1.7"/><circle class="fm-off" cx="435.1" cy="272.3" r="1.7"/><circle class="fm-off" cx="436.3" cy="270.7" r="1.7"/><circle class="fm-off" cx="436.4" cy="270.7" r="1.7"/><circle class="fm-off" cx="486.5" cy="237" r="1.7"/><circle class="fm-off" cx="512.7" cy="231.1" r="1.7"/><circle class="fm-off" cx="515.7" cy="230.2" r="1.7"/><circle class="fm-off" cx="548.4" cy="220.1" r="1.7"/><circle class="fm-off" cx="486" cy="237" r="1.7"/><circle class="fm-off" cx="480.4" cy="239.7" r="1.7"/><circle class="fm-off" cx="475.9" cy="238.2" r="1.7"/><circle class="fm-off" cx="484.7" cy="237.2" r="1.7"/><circle class="fm-off" cx="486.2" cy="232.6" r="1.7"/><circle class="fm-off" cx="436.4" cy="269.8" r="1.7"/><circle class="fm-off" cx="481" cy="236.1" r="1.7"/><circle class="fm-off" cx="484.4" cy="235.7" r="1.7"/><circle class="fm-off" cx="488.4" cy="238.5" r="1.7"/><circle class="fm-off" cx="485" cy="235.1" r="1.7"/><circle class="fm-off" cx="482.8" cy="237.7" r="1.7"/><circle class="fm-off" cx="432.6" cy="268.7" r="1.7"/><circle class="fm-off" cx="487.5" cy="226.3" r="1.7"/><circle class="fm-off" cx="502.7" cy="224.4" r="1.7"/><circle class="fm-off" cx="485.4" cy="236.7" r="1.7"/><circle class="fm-off" cx="501.2" cy="220.5" r="1.7"/><circle class="fm-off" cx="485.2" cy="236.1" r="1.7"/><circle class="fm-off" cx="506.6" cy="236.7" r="1.7"/></g>
+        <g class="fm-abiertos"><circle class="fm-on" cx="275.3" cy="64.4" r="5.9" data-n="VITORIA" data-mw="569" data-kv="400"/><circle class="fm-on" cx="259" cy="54" r="3.6" data-n="AYALA" data-mw="85" data-kv="220"/><circle class="fm-on" cx="281.4" cy="64" r="2.9" data-n="ELGEA" data-mw="22" data-kv="220"/><circle class="fm-on" cx="269.6" cy="66.9" r="4.3" data-n="JUNDIZ" data-mw="188" data-kv="220"/><circle class="fm-on" cx="328.2" cy="272.6" r="4.4" data-n="CAMPANARIO" data-mw="205" data-kv="400"/><circle class="fm-on" cx="349" cy="299" r="4.1" data-n="NOVELDA" data-mw="155" data-kv="220"/><circle class="fm-on" cx="354.5" cy="303" r="3.5" data-n="SALADAS" data-mw="66" data-kv="220"/><circle class="fm-on" cx="343.4" cy="320.4" r="6" data-n="TORREMENDO" data-mw="781" data-kv="400"/><circle class="fm-on" cx="351.3" cy="319.9" r="4.1" data-n="TORREVIEJA" data-mw="155" data-kv="220"/><circle class="fm-on" cx="347.9" cy="323.4" r="2.8" data-n="CAMPOAMOR" data-mw="17" data-kv="220"/><circle class="fm-on" cx="349.8" cy="315.6" r="2.9" data-n="ROJALES" data-mw="22" data-kv="220"/><circle class="fm-on" cx="348.7" cy="318.5" r="4.5" data-n="SAN MIGUEL DE SALINAS" data-mw="209" data-kv="220"/><circle class="fm-on" cx="363.6" cy="282" r="4.3" data-n="Bélgida" data-mw="178" data-kv="220"/><circle class="fm-on" cx="350.4" cy="281.1" r="4.6" data-n="BENEJAMA" data-mw="231" data-kv="220"/><circle class="fm-on" cx="353.8" cy="304.8" r="2.9" data-n="ELCHE" data-mw="22" data-kv="220"/><circle class="fm-on" cx="286.9" cy="366.9" r="4.4" data-n="TABERNAS" data-mw="204" data-kv="220"/><circle class="fm-on" cx="305.6" cy="359" r="5.8" data-n="Antas" data-mw="548" data-kv="400"/><circle class="fm-on" cx="303.1" cy="371.7" r="5.7" data-n="LITORAL" data-mw="514" data-kv="400"/><circle class="fm-on" cx="280.8" cy="375.3" r="3.3" data-n="BENAHADUX" data-mw="55" data-kv="220"/><circle class="fm-on" cx="107.8" cy="277.6" r="4" data-n="ALVARADO" data-mw="137" data-kv="220"/><circle class="fm-on" cx="111.7" cy="301.9" r="4.1" data-n="BROVALES" data-mw="146" data-kv="220"/><circle class="fm-on" cx="128.1" cy="275.3" r="5.8" data-n="Don Álvaro" data-mw="532" data-kv="400"/><circle class="fm-on" cx="127.8" cy="305.7" r="6" data-n="FUENTE DE CANTOS" data-mw="726" data-kv="400"/><circle class="fm-on" cx="121.6" cy="290.8" r="5.7" data-n="Fuente del Maestre" data-mw="511" data-kv="400"/><circle class="fm-on" cx="119.1" cy="276.6" r="5.1" data-n="SAN SERVAN" data-mw="339" data-kv="220"/><circle class="fm-on" cx="111.3" cy="301.6" r="3.9" data-n="BALBOA" data-mw="125" data-kv="220"/><circle class="fm-on" cx="131.8" cy="302" r="4.1" data-n="BIENVENIDA" data-mw="152" data-kv="400"/><circle class="fm-on" cx="138.7" cy="306" r="6" data-n="LLERENA" data-mw="627" data-kv="400"/><circle class="fm-on" cx="100.6" cy="274.9" r="3.6" data-n="VAGUADAS" data-mw="78" data-kv="220"/><circle class="fm-on" cx="126.1" cy="271.9" r="3.3" data-n="MERIDA" data-mw="52" data-kv="220"/><circle class="fm-on" cx="471.8" cy="131.9" r="3.3" data-n="LA ROCA" data-mw="46" data-kv="220"/><circle class="fm-on" cx="470.3" cy="129" r="3.3" data-n="FRANQUESES" data-mw="46" data-kv="220"/><circle class="fm-on" cx="445.8" cy="132.4" r="3.4" data-n="ANOIA" data-mw="63" data-kv="220"/><circle class="fm-on" cx="244.9" cy="85.1" r="2.4" data-n="ALCOCERO DE MOLA" data-mw="1" data-kv="220"/><circle class="fm-on" cx="226.7" cy="93.6" r="5.6" data-n="BUNIEL" data-mw="466" data-kv="400"/><circle class="fm-on" cx="228.3" cy="92.7" r="5.6" data-n="Cotorros" data-mw="468" data-kv="400"/><circle class="fm-on" cx="246.8" cy="81.1" r="5.5" data-n="Fuentebureba" data-mw="447" data-kv="400"/><circle class="fm-on" cx="251.3" cy="70.1" r="3.4" data-n="GAROÑA" data-mw="55" data-kv="220"/><circle class="fm-on" cx="225.7" cy="58.3" r="4.7" data-n="VIRTUS" data-mw="255" data-kv="400"/><circle class="fm-on" cx="239.5" cy="129.7" r="4.8" data-n="Zuzones" data-mw="270" data-kv="400"/><circle class="fm-on" cx="240" cy="75.7" r="2.3" data-n="POZA DE LA SAL" data-mw="1" data-kv="220"/><circle class="fm-on" cx="212.8" cy="101.6" r="2.5" data-n="VALLEJERA" data-mw="3" data-kv="220"/><circle class="fm-on" cx="231.4" cy="90.7" r="2.5" data-n="Villatoro" data-mw="5" data-kv="220"/><circle class="fm-on" cx="233.5" cy="91.1" r="2.4" data-n="VILLIMAR" data-mw="2" data-kv="220"/><circle class="fm-on" cx="151.9" cy="224.5" r="4.9" data-n="ALMARAZ CN" data-mw="310" data-kv="220"/><circle class="fm-on" cx="140.1" cy="223" r="3.8" data-n="TORREJON" data-mw="108" data-kv="220"/><circle class="fm-on" cx="125.3" cy="224.9" r="5.8" data-n="CAÑAVERAL" data-mw="524" data-kv="400"/><circle class="fm-on" cx="126.6" cy="198.6" r="2.5" data-n="Zarzón" data-mw="3" data-kv="400"/><circle class="fm-on" cx="78.5" cy="231.9" r="4.4" data-n="CEDILLO" data-mw="203" data-kv="400"/><circle class="fm-on" cx="162.7" cy="407.7" r="3.5" data-n="CASTELLAR DE LA FRONTERA" data-mw="65" data-kv="400"/><circle class="fm-on" cx="140.1" cy="407.1" r="3.9" data-n="EL ZUMAJO" data-mw="126" data-kv="220"/><circle class="fm-on" cx="137.1" cy="386.3" r="3.6" data-n="MIRABAL" data-mw="83" data-kv="220"/><circle class="fm-on" cx="146.9" cy="387.7" r="4.3" data-n="ARCOS DE LA FRONTERA" data-mw="177" data-kv="400"/><circle class="fm-on" cx="148.3" cy="396.8" r="3" data-n="GAZULES" data-mw="30" data-kv="220"/><circle class="fm-on" cx="186.5" cy="277.6" r="5.8" data-n="Almadén" data-mw="548" data-kv="400"/><circle class="fm-on" cx="213.7" cy="283.2" r="3.4" data-n="LA NAVA" data-mw="60" data-kv="220"/><circle class="fm-on" cx="213.7" cy="283.2" r="2.3" data-n="LA SOLANA" data-mw="0" data-kv="220"/><circle class="fm-on" cx="245.7" cy="264.2" r="5.1" data-n="MANZANARES" data-mw="357" data-kv="400"/><circle class="fm-on" cx="209.4" cy="284.6" r="3.6" data-n="BRAZATORTAS" data-mw="76" data-kv="220"/><circle class="fm-on" cx="202.5" cy="289.2" r="3" data-n="VENTA INES" data-mw="26" data-kv="220"/><circle class="fm-on" cx="214.6" cy="284.8" r="3.6" data-n="PUERTOLLANO" data-mw="76" data-kv="220"/><circle class="fm-on" cx="258.8" cy="255.2" r="5.3" data-n="Barataria" data-mw="400" data-kv="400"/><circle class="fm-on" cx="221.1" cy="269.2" r="4" data-n="ALARCOS" data-mw="130" data-kv="220"/><circle class="fm-on" cx="220.1" cy="284.3" r="3.6" data-n="ELCOGAS" data-mw="76" data-kv="220"/><circle class="fm-on" cx="199.8" cy="346.8" r="6" data-n="CABRA" data-mw="827" data-kv="400"/><circle class="fm-on" cx="18.7" cy="64" r="3.7" data-n="MAZARICOS" data-mw="95" data-kv="220"/><circle class="fm-on" cx="38.7" cy="64" r="3.9" data-n="SAN CAYETANO" data-mw="117" data-kv="220"/><circle class="fm-on" cx="58.9" cy="50.5" r="3.5" data-n="SIDEGASA" data-mw="69" data-kv="220"/><circle class="fm-on" cx="45.7" cy="49.7" r="6" data-n="MESON D.V." data-mw="809" data-kv="400"/><circle class="fm-on" cx="47.9" cy="46.8" r="5.6" data-n="Abegondo" data-mw="470" data-kv="400"/><circle class="fm-on" cx="48.1" cy="46.9" r="4" data-n="Abegondo" data-mw="135" data-kv="220"/><circle class="fm-on" cx="28.7" cy="67.9" r="3.1" data-n="LOUSAME" data-mw="35" data-kv="220"/><circle class="fm-on" cx="17.9" cy="57.6" r="2.8" data-n="REGOELLE" data-mw="14" data-kv="220"/><circle class="fm-on" cx="36.8" cy="66" r="4.4" data-n="SANTIAGO DE COMPOSTELA" data-mw="205" data-kv="220"/><circle class="fm-on" cx="18" cy="53.1" r="3.9" data-n="VIMIANZO" data-mw="123" data-kv="220"/><circle class="fm-on" cx="65.4" cy="35.5" r="5.1" data-n="PUENTES G.R." data-mw="346" data-kv="400"/><circle class="fm-on" cx="147.3" cy="44.1" r="3.5" data-n="LA PEREDA" data-mw="73" data-kv="220"/><circle class="fm-on" cx="230.5" cy="356.6" r="4.6" data-n="CAPARACENA" data-mw="236" data-kv="400"/><circle class="fm-on" cx="269.6" cy="341.5" r="4.7" data-n="BAZA REE" data-mw="266" data-kv="400"/><circle class="fm-on" cx="261.8" cy="359.3" r="2.8" data-n="HUENEJA" data-mw="13" data-kv="400"/><circle class="fm-on" cx="238.4" cy="349.8" r="5.7" data-n="Iznalloz" data-mw="514" data-kv="400"/><circle class="fm-on" cx="289.3" cy="47.3" r="5.7" data-n="AZPEITIA" data-mw="494" data-kv="400"/><circle class="fm-on" cx="300.4" cy="45" r="5.6" data-n="HERNANI" data-mw="483" data-kv="400"/><circle class="fm-on" cx="286.6" cy="54.2" r="2.8" data-n="ZUMARRAGA" data-mw="15" data-kv="220"/><circle class="fm-on" cx="288.4" cy="55.2" r="3.8" data-n="ITXASO" data-mw="103" data-kv="220"/><circle class="fm-on" cx="90.2" cy="342" r="5.9" data-n="PUEBLA DE GUZMAN" data-mw="552" data-kv="400"/><circle class="fm-on" cx="124.3" cy="352.7" r="4.2" data-n="CHUCENA" data-mw="160" data-kv="220"/><circle class="fm-on" cx="120" cy="363" r="4.2" data-n="ROCIO" data-mw="160" data-kv="220"/><circle class="fm-on" cx="227.5" cy="329" r="4.7" data-n="OLIVARES" data-mw="259" data-kv="220"/><circle class="fm-on" cx="211.8" cy="316" r="6" data-n="GUADAME" data-mw="875" data-kv="400"/><circle class="fm-on" cx="117.1" cy="78.5" r="4.4" data-n="COMPOSTILLA" data-mw="205" data-kv="220"/><circle class="fm-on" cx="121" cy="66.6" r="3.4" data-n="ONDINAS" data-mw="56" data-kv="220"/><circle class="fm-on" cx="128.2" cy="61.5" r="3.5" data-n="VILLABLINO" data-mw="73" data-kv="220"/><circle class="fm-on" cx="118.5" cy="70.5" r="3.5" data-n="PEÑADRADA" data-mw="72" data-kv="220"/><circle class="fm-on" cx="119.2" cy="75.6" r="3.7" data-n="SANTA MARINA" data-mw="90" data-kv="220"/><circle class="fm-on" cx="138.1" cy="77.5" r="3.9" data-n="VILLAMECA" data-mw="123" data-kv="400"/><circle class="fm-on" cx="114.8" cy="79.9" r="6" data-n="LOMBA" data-mw="602" data-kv="220"/><circle class="fm-on" cx="117.7" cy="80.6" r="3.3" data-n="MONTEARENAS" data-mw="47" data-kv="220"/><circle class="fm-on" cx="298.6" cy="95.9" r="3.4" data-n="QUEL" data-mw="55" data-kv="220"/><circle class="fm-on" cx="289.3" cy="88.7" r="3.7" data-n="EL SEQUERO" data-mw="97" data-kv="220"/><circle class="fm-on" cx="288.9" cy="92.3" r="3.8" data-n="SANTA ENGRACIA" data-mw="108" data-kv="220"/><circle class="fm-on" cx="85.2" cy="76.1" r="4.8" data-n="O INCIO" data-mw="281" data-kv="220"/><circle class="fm-on" cx="79.7" cy="22.3" r="5" data-n="XOVE" data-mw="318" data-kv="400"/><circle class="fm-on" cx="71.3" cy="77.8" r="4.5" data-n="BELESAR" data-mw="215" data-kv="220"/><circle class="fm-on" cx="77.7" cy="27.7" r="3.5" data-n="BOIMENTE" data-mw="73" data-kv="400"/><circle class="fm-on" cx="69.1" cy="77.9" r="4" data-n="CHANTADA" data-mw="128" data-kv="220"/><circle class="fm-on" cx="83.2" cy="51.7" r="4.2" data-n="LUDRIO" data-mw="160" data-kv="400"/><circle class="fm-on" cx="174.5" cy="383" r="3.6" data-n="Ronda" data-mw="81" data-kv="400"/><circle class="fm-on" cx="170.9" cy="399.5" r="3.8" data-n="JORDANA" data-mw="104" data-kv="220"/><circle class="fm-on" cx="195.4" cy="383.5" r="5.6" data-n="CARTAMA" data-mw="488" data-kv="400"/><circle class="fm-on" cx="189.8" cy="376" r="3.9" data-n="TAJO ENCANTADA" data-mw="122" data-kv="400"/><circle class="fm-on" cx="346.7" cy="325.8" r="2.8" data-n="SAN PEDRO DEL PINATAR" data-mw="17" data-kv="220"/><circle class="fm-on" cx="341.3" cy="341.2" r="4.8" data-n="FAUSITA" data-mw="269" data-kv="400"/><circle class="fm-on" cx="326" cy="291.4" r="4.5" data-n="PEÑARRUBIA" data-mw="224" data-kv="400"/><circle class="fm-on" cx="337.4" cy="308" r="6" data-n="Abanilla" data-mw="753" data-kv="400"/><circle class="fm-on" cx="344.3" cy="332" r="2.8" data-n="HOYA MORENA" data-mw="17" data-kv="220"/><circle class="fm-on" cx="340.9" cy="337.6" r="6" data-n="ASOMADA" data-mw="620" data-kv="400"/><circle class="fm-on" cx="341" cy="329.1" r="4.6" data-n="BALSICAS" data-mw="230" data-kv="220"/><circle class="fm-on" cx="331.8" cy="321.6" r="4.3" data-n="EL PALMAR" data-mw="183" data-kv="400"/><circle class="fm-on" cx="321.5" cy="330.7" r="4.8" data-n="TOTANA" data-mw="269" data-kv="400"/><circle class="fm-on" cx="341.6" cy="340.8" r="5.4" data-n="NUEVA ESCOMBRERAS" data-mw="411" data-kv="400"/><circle class="fm-on" cx="61.2" cy="90.2" r="4" data-n="AMOEIRO" data-mw="131" data-kv="220"/><circle class="fm-on" cx="92.8" cy="101.7" r="4" data-n="CONSO" data-mw="134" data-kv="220"/><circle class="fm-on" cx="107.2" cy="85.9" r="3.5" data-n="CORNATEL" data-mw="70" data-kv="220"/><circle class="fm-on" cx="98.3" cy="93.3" r="4.1" data-n="PRADA" data-mw="151" data-kv="220"/><circle class="fm-on" cx="73.7" cy="88.9" r="5.3" data-n="SAN ESTEBAN" data-mw="390" data-kv="220"/><circle class="fm-on" cx="103" cy="88.8" r="4.7" data-n="SOBRADELO" data-mw="251" data-kv="220"/><circle class="fm-on" cx="97.3" cy="102.4" r="4.1" data-n="S.AGUSTIN" data-mw="151" data-kv="220"/><circle class="fm-on" cx="71.3" cy="86.9" r="4.8" data-n="SAN PEDRO" data-mw="281" data-kv="220"/><circle class="fm-on" cx="96.2" cy="90" r="4.8" data-n="SANTIAGO" data-mw="285" data-kv="220"/><circle class="fm-on" cx="106.5" cy="88.7" r="2.9" data-n="QUEREÑO" data-mw="19" data-kv="220"/><circle class="fm-on" cx="48.9" cy="86" r="6" data-n="BEARIZ" data-mw="653" data-kv="400"/><circle class="fm-on" cx="57.6" cy="97.1" r="6" data-n="CARTELLE" data-mw="617" data-kv="220"/><circle class="fm-on" cx="53.5" cy="89.7" r="2.3" data-n="ALBARELLOS" data-mw="1" data-kv="220"/><circle class="fm-on" cx="55.3" cy="95.2" r="3.3" data-n="CASTRELO" data-mw="47" data-kv="220"/><circle class="fm-on" cx="88.6" cy="92.5" r="4.9" data-n="TRIVES" data-mw="308" data-kv="220"/><circle class="fm-on" cx="74.4" cy="91.8" r="4.3" data-n="PARQUE EOLICO DO SIL" data-mw="176" data-kv="220"/><circle class="fm-on" cx="65.9" cy="91.8" r="4.5" data-n="VELLE" data-mw="219" data-kv="220"/><circle class="fm-on" cx="92.4" cy="101.7" r="5.9" data-n="Viana" data-mw="557" data-kv="400"/><circle class="fm-on" cx="90.9" cy="94" r="6" data-n="PUENTE BIBEY" data-mw="585" data-kv="220"/><circle class="fm-on" cx="123.9" cy="43.2" r="2.8" data-n="NARCEA" data-mw="14" data-kv="400"/><circle class="fm-on" cx="127.7" cy="39.3" r="4.1" data-n="SALAS" data-mw="153" data-kv="400"/><circle class="fm-on" cx="149.4" cy="38.6" r="4.6" data-n="SIERO" data-mw="238" data-kv="220"/><circle class="fm-on" cx="144.2" cy="42.1" r="4.1" data-n="SOTO DE RIBERA" data-mw="155" data-kv="400"/><circle class="fm-on" cx="151.8" cy="42.5" r="2.8" data-n="LADA" data-mw="13" data-kv="400"/><circle class="fm-on" cx="105.1" cy="45.7" r="3.5" data-n="PESOZ" data-mw="73" data-kv="400"/><circle class="fm-on" cx="139.9" cy="38.2" r="4.1" data-n="SANTA MARIA DE GRADO" data-mw="155" data-kv="400"/><circle class="fm-on" cx="146.2" cy="57" r="3.5" data-n="TELLEDO" data-mw="73" data-kv="220"/><circle class="fm-on" cx="183.2" cy="40.8" r="4.5" data-n="Ortiguero" data-mw="227" data-kv="220"/><circle class="fm-on" cx="112.7" cy="44.3" r="5.8" data-n="EL PALO" data-mw="542" data-kv="400"/><circle class="fm-on" cx="185.3" cy="67.6" r="4.7" data-n="VELILLA" data-mw="265" data-kv="400"/><circle class="fm-on" cx="185.5" cy="67.8" r="2.3" data-n="GUARDO" data-mw="0" data-kv="220"/><circle class="fm-on" cx="205.8" cy="79.5" r="4.3" data-n="HERRERA" data-mw="190" data-kv="220"/><circle class="fm-on" cx="209.1" cy="65.2" r="3.3" data-n="CILLAMAYOR" data-mw="53" data-kv="220"/><circle class="fm-on" cx="52.3" cy="66" r="4" data-n="PORTODEMOUROS" data-mw="142" data-kv="220"/><circle class="fm-on" cx="49.8" cy="71.5" r="5.8" data-n="SILLEDA" data-mw="542" data-kv="400"/><circle class="fm-on" cx="49.1" cy="96.8" r="4" data-n="SUIDO" data-mw="133" data-kv="220"/><circle class="fm-on" cx="47.2" cy="97.3" r="4.1" data-n="FONTEFRIA" data-mw="148" data-kv="220"/><circle class="fm-on" cx="112.6" cy="151.6" r="6" data-n="ALDEADAVILA" data-mw="786" data-kv="220"/><circle class="fm-on" cx="110.4" cy="161.5" r="5.7" data-n="HINOJOSA" data-mw="503" data-kv="400"/><circle class="fm-on" cx="117.7" cy="181.1" r="5.6" data-n="CIUDAD RODRIGO" data-mw="486" data-kv="400"/><circle class="fm-on" cx="107.5" cy="160.2" r="3.8" data-n="SAUCELLE" data-mw="109" data-kv="220"/><circle class="fm-on" cx="213.1" cy="64.6" r="3.6" data-n="MATAPORQUERA" data-mw="86" data-kv="220"/><circle class="fm-on" cx="236.1" cy="40.7" r="4.8" data-n="SOLORZANO" data-mw="278" data-kv="400"/><circle class="fm-on" cx="216.4" cy="39.8" r="4.5" data-n="PUENTE S.MIGUEL" data-mw="217" data-kv="220"/><circle class="fm-on" cx="218.8" cy="52.2" r="5.4" data-n="AGUAYO" data-mw="423" data-kv="220"/><circle class="fm-on" cx="238.6" cy="38" r="3.5" data-n="CICERO" data-mw="65" data-kv="220"/><circle class="fm-on" cx="226.5" cy="40.4" r="6" data-n="PENAGOS" data-mw="633" data-kv="400"/><circle class="fm-on" cx="221.9" cy="38.5" r="4.3" data-n="Piélagos" data-mw="183" data-kv="220"/><circle class="fm-on" cx="146" cy="357.8" r="4.7" data-n="DON RODRIGO" data-mw="257" data-kv="220"/><circle class="fm-on" cx="136.9" cy="345.5" r="2.4" data-n="SALTERAS" data-mw="1" data-kv="220"/><circle class="fm-on" cx="173.1" cy="343.1" r="6" data-n="VILLANUEVA DEL REY" data-mw="729" data-kv="400"/><circle class="fm-on" cx="188.5" cy="357.3" r="4.5" data-n="RODA DE ANDALUCIA" data-mw="218" data-kv="400"/><circle class="fm-on" cx="135.8" cy="337.5" r="5" data-n="GUILLENA" data-mw="316" data-kv="400"/><circle class="fm-on" cx="149.3" cy="341.6" r="6" data-n="CARMONA" data-mw="809" data-kv="400"/><circle class="fm-on" cx="143.5" cy="355" r="3" data-n="DOS HERMANAS" data-mw="28" data-kv="220"/><circle class="fm-on" cx="279.3" cy="139.6" r="5" data-n="Coscurita" data-mw="322" data-kv="220"/><circle class="fm-on" cx="284.4" cy="156.9" r="3.7" data-n="MEDINACELI" data-mw="97" data-kv="400"/><circle class="fm-on" cx="227.4" cy="231.1" r="4.7" data-n="MORA" data-mw="268" data-kv="220"/><circle class="fm-on" cx="224.7" cy="248.8" r="4.4" data-n="EL EMPERADOR" data-mw="207" data-kv="220"/><circle class="fm-on" cx="359.2" cy="243" r="2.3" data-n="ALDAIA" data-mw="0" data-kv="220"/><circle class="fm-on" cx="362.2" cy="240.3" r="3.3" data-n="FERIA DE MUESTRAS" data-mw="48" data-kv="220"/><circle class="fm-on" cx="353.3" cy="270.2" r="6" data-n="MONTESA" data-mw="869" data-kv="400"/><circle class="fm-on" cx="358.2" cy="241.5" r="2.3" data-n="QUART DE POBLET" data-mw="0" data-kv="220"/><circle class="fm-on" cx="352.4" cy="243.4" r="5.5" data-n="GODELLETA" data-mw="455" data-kv="220"/><circle class="fm-on" cx="181.9" cy="121.4" r="3" data-n="MUDARRITA" data-mw="25" data-kv="220"/><circle class="fm-on" cx="191" cy="135.1" r="4.1" data-n="LAS ARROYADAS" data-mw="150" data-kv="220"/><circle class="fm-on" cx="260.2" cy="45.5" r="2.3" data-n="ALONSOTEGUI" data-mw="0" data-kv="220"/><circle class="fm-on" cx="264.3" cy="40.2" r="4.4" data-n="GATICA" data-mw="192" data-kv="400"/><circle class="fm-on" cx="255.3" cy="47.8" r="4.5" data-n="LA JARA" data-mw="223" data-kv="220"/><circle class="fm-on" cx="258" cy="42" r="3" data-n="ORTUELLA" data-mw="29" data-kv="220"/><circle class="fm-on" cx="257.4" cy="40.8" r="4.7" data-n="SANTURCE" data-mw="250" data-kv="400"/><circle class="fm-on" cx="275.6" cy="51.2" r="2.3" data-n="ABADIANO" data-mw="0" data-kv="220"/><circle class="fm-on" cx="255.7" cy="41.4" r="2.3" data-n="ABANTO" data-mw="1" data-kv="400"/><circle class="fm-on" cx="255.8" cy="39.7" r="2.3" data-n="ZIERBENA" data-mw="1" data-kv="400"/><circle class="fm-on" cx="269.5" cy="46.1" r="4.4" data-n="AMOREBIETA" data-mw="192" data-kv="400"/><circle class="fm-on" cx="258.2" cy="47" r="2.3" data-n="GUEÑES" data-mw="0" data-kv="220"/><circle class="fm-on" cx="272.7" cy="56.1" r="3.8" data-n="Barrundia" data-mw="110" data-kv="220"/><circle class="fm-on" cx="263.7" cy="46.9" r="3" data-n="BASAURI" data-mw="23" data-kv="220"/><circle class="fm-on" cx="145.2" cy="122.9" r="5.4" data-n="TABARA" data-mw="434" data-kv="400"/><circle class="fm-on" cx="128.8" cy="110.6" r="4.7" data-n="VALPARAISO" data-mw="267" data-kv="220"/><circle class="fm-on" cx="136.1" cy="136.9" r="4.3" data-n="VILLALCAMPO" data-mw="183" data-kv="220"/><circle class="fm-on" cx="105.3" cy="108.7" r="4.6" data-n="APARECIDA" data-mw="245" data-kv="400"/><circle class="fm-on" cx="118" cy="107.9" r="6" data-n="ARBILLERA" data-mw="603" data-kv="400"/><circle class="fm-on" cx="114.8" cy="107.2" r="4.1" data-n="PUEBLA DE SANABRIA" data-mw="151" data-kv="220"/><circle class="fm-on" cx="104.1" cy="108.4" r="2.3" data-n="LUBIAN" data-mw="1" data-kv="220"/><circle class="fm-on" cx="150.3" cy="126.9" r="6" data-n="Moreruela" data-mw="601" data-kv="400"/><circle class="fm-on" cx="140.2" cy="135" r="3.7" data-n="RICOBAYO" data-mw="99" data-kv="220"/><circle class="fm-on" cx="116.9" cy="392" r="2.6" data-n="SAN BARTOLOME" data-mw="7" data-kv="66"/><circle class="fm-on" cx="110.8" cy="399" r="2.7" data-n="CORRALEJO" data-mw="11" data-kv="66"/><circle class="fm-on" cx="110.7" cy="398.1" r="2.9" data-n="LA OLIVA" data-mw="21" data-kv="132"/><circle class="fm-on" cx="71.3" cy="422.7" r="3.2" data-n="SANTA AGUEDA" data-mw="43" data-kv="220"/><circle class="fm-on" cx="76.8" cy="415.9" r="3" data-n="JINAMAR" data-mw="29" data-kv="220"/><circle class="fm-on" cx="76.2" cy="414.6" r="2.6" data-n="LOMO APOLINARIO" data-mw="7" data-kv="66"/><circle class="fm-on" cx="73.1" cy="422.7" r="2.7" data-n="LOMO MASPALOMAS" data-mw="11" data-kv="66"/><circle class="fm-on" cx="115" cy="393" r="2.9" data-n="MACHER" data-mw="21" data-kv="66"/><circle class="fm-on" cx="74.2" cy="414.4" r="3" data-n="ARUCAS" data-mw="30" data-kv="66"/><circle class="fm-on" cx="110.9" cy="403.8" r="2.9" data-n="PUERTO DEL ROSARIO" data-mw="21" data-kv="132"/><circle class="fm-on" cx="118.7" cy="392.3" r="2.6" data-n="PUNTA GRANDE" data-mw="7" data-kv="66"/><circle class="fm-on" cx="115" cy="393" r="2.9" data-n="TIAS" data-mw="21" data-kv="132"/><circle class="fm-on" cx="112.5" cy="395.1" r="2.9" data-n="PLAYA BLANCA" data-mw="21" data-kv="132"/><circle class="fm-on" cx="76.6" cy="415.8" r="3" data-n="SABINAL" data-mw="29" data-kv="220"/><circle class="fm-on" cx="111.4" cy="404.3" r="2.5" data-n="SALINAS" data-mw="4" data-kv="66"/><circle class="fm-on" cx="73.7" cy="422.8" r="2.7" data-n="SAN AGUSTIN GC" data-mw="11" data-kv="66"/><circle class="fm-on" cx="48.3" cy="415.2" r="2.3" data-n="CHAYOFA" data-mw="1" data-kv="66"/><circle class="fm-on" cx="48.3" cy="407.7" r="2.9" data-n="ICOD DE LOS VINOS" data-mw="18" data-kv="66"/><circle class="fm-on" cx="49.2" cy="416.3" r="2.9" data-n="Las Rosas" data-mw="19" data-kv="66"/><circle class="fm-on" cx="49.6" cy="415.7" r="2.8" data-n="ARONA" data-mw="13" data-kv="66"/><circle class="fm-on" cx="47.8" cy="408" r="2.9" data-n="Drago" data-mw="18" data-kv="66"/><circle class="fm-on" cx="48.2" cy="414.7" r="3.3" data-n="VALLITOS" data-mw="53" data-kv="220"/><circle class="fm-on" cx="55.5" cy="408.4" r="2.9" data-n="POLIGONO GUIMAR" data-mw="20" data-kv="66"/><circle class="fm-on" cx="54.6" cy="405" r="3" data-n="TACORONTE" data-mw="28" data-kv="66"/><circle class="fm-on" cx="53.6" cy="413.4" r="2.8" data-n="TAGORO" data-mw="14" data-kv="66"/><circle class="fm-on" cx="516" cy="228.1" r="2.9" data-n="CALA MESQUIDA" data-mw="18" data-kv="132"/><circle class="fm-on" cx="495" cy="240.6" r="2.7" data-n="LLUCMAJOR" data-mw="11" data-kv="66"/><circle class="fm-on" cx="484.9" cy="233.6" r="2.6" data-n="BIT" data-mw="6" data-kv="66"/><circle class="fm-on" cx="533.1" cy="214.3" r="2.2" data-n="CIUDADELA" data-mw="0" data-kv="132"/><circle class="fm-on" cx="495.7" cy="229.3" r="2.9" data-n="INCA" data-mw="23" data-kv="66"/><circle class="fm-on" cx="505.3" cy="236.2" r="3" data-n="ES BESSONS" data-mw="25" data-kv="132"/><circle class="fm-on" cx="542.7" cy="215.7" r="2.5" data-n="MERCADAL" data-mw="4" data-kv="132"/><circle class="fm-on" cx="489.9" cy="239.1" r="2.4" data-n="ARENAL" data-mw="2" data-kv="66"/><circle class="fm-on" cx="505.2" cy="227.6" r="2.2" data-n="CAN PICAFORT" data-mw="0" data-kv="66"/><circle class="fm-on" cx="488.8" cy="235.3" r="3.9" data-n="SON ORLANDIS" data-mw="121" data-kv="66"/><circle class="fm-on" cx="508.4" cy="244.6" r="2.3" data-n="PORTO COLOM" data-mw="1" data-kv="66"/><circle class="fm-on" cx="486.5" cy="232.4" r="2.6" data-n="SES VELES" data-mw="6" data-kv="66"/><circle class="fm-on" cx="485.4" cy="234.8" r="2.3" data-n="POLIGONO BALEARES" data-mw="0" data-kv="66"/><circle class="fm-on" cx="549.2" cy="219.8" r="2.9" data-n="MAHON" data-mw="20" data-kv="132"/><circle class="fm-on" cx="488.1" cy="234.7" r="3.4" data-n="MARRATXI" data-mw="55" data-kv="66"/></g>
+      </svg>
+      <!-- FONDO:FIN -->
+          <p class="fm-tip" id="fm-tip" aria-hidden="true"></p>
           <div class="uni-legend" aria-hidden="true">
-            <span class="lg"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="none" stroke="#141824" stroke-width="1.6"/></svg> 220 kV</span>
-            <span class="lg"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" fill="none" stroke="#141824" stroke-width="1.6"/></svg> 400 kV</span>
+            <span class="lg"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="1.9" fill="#9AA3B2"/></svg> <span id="fm-cnt-off">sin margen</span></span>
             <span class="lg"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.4" fill="#1F7A44"/></svg> admite nueva demanda</span>
-            <span class="note">Esquema ilustrativo</span>
+            <span class="note" id="fm-nota">Red de transporte · dato real</span>
           </div>
         </div>
 
@@ -491,9 +639,6 @@
     <!-- ============ qué recibes: detalles de lámina ============ -->
     <section class="section">
       <div class="sec-h">
-        <svg class="sec-mark" width="30" height="10" viewBox="0 0 30 10" aria-hidden="true">
-          <line x1="0" y1="5" x2="30" y2="5"/><circle cx="16" cy="5" r="4.4"/>
-        </svg>
         <h2>Qué llega a tu bandeja</h2>
         <i class="sec-fill" aria-hidden="true"></i>
         <span class="sec-note">cada edición</span>
@@ -505,10 +650,10 @@
             <!-- Medidor de capacidad: relleno --ok sobre --track, marcador de tope en tinta -->
             <svg viewBox="0 0 224 58" role="img" aria-label="Medidor: MW disponibles frente al total de la red">
               <text x="1" y="11" class="svg-cap" font-size="10" fill="#1F7A44">DISPONIBLE</text>
-              <text x="223" y="11" text-anchor="end" class="svg-cap" font-size="10" fill="#4A5468">TOTAL</text>
+              <text x="223" y="11" text-anchor="end" class="svg-cap" font-size="10" fill="#5A6478">TOTAL</text>
               <rect x="2" y="24" width="220" height="9" fill="#EBEFF5" stroke="#D9E0EA"/>
               <rect x="2" y="24" width="96" height="9" fill="#1F7A44"/>
-              <line x1="98" y1="18" x2="98" y2="39" stroke="#141824" stroke-width="2"/>
+              <line x1="98" y1="18" x2="98" y2="39" stroke="#101522" stroke-width="2"/>
               <g stroke="#D9E0EA" stroke-width="1.6" stroke-linecap="round">
                 <line x1="14" y1="44" x2="14" y2="50"/><line x1="38" y1="44" x2="38" y2="50"/>
                 <line x1="63" y1="44" x2="63" y2="50"/><line x1="87" y1="44" x2="87" y2="50"/>
@@ -530,8 +675,8 @@
           <div class="wviz">
             <!-- Delta mes a mes: barras --ok (liberan) sobre el eje, --bad (pierden) debajo -->
             <svg viewBox="0 0 224 58" role="img" aria-label="Cambios de capacidad respecto al mes anterior">
-              <text x="1" y="10" class="svg-cap" font-size="9.5" fill="#4A5468">Δ VS. MES ANTERIOR</text>
-              <line x1="2" y1="36" x2="222" y2="36" stroke="#141824" stroke-width="1.2"/>
+              <text x="1" y="10" class="svg-cap" font-size="9.5" fill="#5A6478">Δ VS. MES ANTERIOR</text>
+              <line x1="2" y1="36" x2="222" y2="36" stroke="#101522" stroke-width="1.2"/>
               <g>
                 <rect class="dbar up"   x="8"   y="16" width="13" height="20" fill="#1F7A44"/>
                 <rect class="dbar down" x="34"  y="36" width="13" height="10" fill="#B3372A"/>
@@ -638,7 +783,7 @@
     </section>
 
     <footer>
-      <span>NudoRed · Radar de Capacidad · Inteligencia de la red eléctrica española</span>
+      <span><b class="firma">NudoRed</b> · Radar de Capacidad · Inteligencia de la red eléctrica española</span>
       <span>Fuente: CNMC · <span id="year"></span></span>
     </footer>
 
@@ -737,6 +882,88 @@
     // Año dinámico en el pie (sin tocar el resto del DOM, para no perder el listener).
     var yr = document.getElementById('year');
     if(yr) yr.textContent = new Date().getFullYear();
+
+    // ================= MAPA DE LA RED =================
+    // El SVG ya viene entero del build. Esto solo AÑADE: el barrido de entrada, el latido de
+    // los nudos grandes y el rótulo del nudo bajo el puntero. Si este bloque no corre, el mapa
+    // se ve igual — solo quieto.
+    var mapa = document.querySelector('.fondo-mapa');
+    if(mapa){
+      var quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+      var abiertos = Array.prototype.slice.call(mapa.querySelectorAll('.fm-on'));
+      var tip = document.getElementById('fm-tip');
+
+      // Leyenda y nota, desde los datos del propio SVG: nunca a mano, para que no puedan
+      // contradecir al mapa que tienen al lado.
+      var off = document.getElementById('fm-cnt-off');
+      if(off) off.textContent = (mapa.dataset.total - mapa.dataset.abiertos) + ' sin margen';
+      var nota = document.getElementById('fm-nota'), per = mapa.dataset.periodo || '';
+      if(nota && per.length === 6) nota.textContent = 'CNMC · ' + per.slice(0,2) + '/' + per.slice(2);
+
+      if(!quieto){
+        // Barrido oeste→este: el retardo sale de la X real del nudo, así que la ola recorre
+        // la península de verdad en vez de ser un stagger por orden de aparición en el DOM.
+        var ancho = mapa.viewBox.baseVal.width || 640;
+        abiertos.forEach(function(n){
+          n.style.animationDelay = (0.28 + (n.cx.baseVal.value / ancho) * 1.15).toFixed(3) + 's';
+        });
+        // Los 14 de más MW siguen latiendo cuando el barrido acaba.
+        abiertos.slice().sort(function(a,b){ return b.dataset.mw - a.dataset.mw; })
+          .slice(0,14).forEach(function(n,i){
+            n.classList.add('fm-late');
+            n.style.animationDelay = (1.6 + i * 0.24).toFixed(2) + 's';
+          });
+
+        // El barrido arranca cuando el mapa entra en pantalla, no al cargar: si el visitante
+        // llega con la página ya desplazada, se lo perdería entero.
+        if('IntersectionObserver' in window){
+          var io = new IntersectionObserver(function(es){
+            es.forEach(function(e){
+              if(e.isIntersecting){ mapa.classList.add('barrido'); io.disconnect(); }
+            });
+          }, { threshold: 0.25 });
+          io.observe(mapa);
+        } else { mapa.classList.add('barrido'); }
+      }
+
+      // Nudo bajo el puntero: se busca el más cercano en coordenadas del SVG (no de pantalla),
+      // así el radio de captura no cambia con el zoom ni con el ancho del móvil.
+      var cerca = null, pend = false, ult = null;
+      function pintar(){
+        pend = false;
+        if(!ult) return;
+        var pt = mapa.createSVGPoint();
+        pt.x = ult.clientX; pt.y = ult.clientY;
+        var loc = pt.matrixTransform(mapa.getScreenCTM().inverse());
+        var mejor = null, dm = 22 * 22;   // radio de captura, en unidades de viewBox
+        for(var i=0;i<abiertos.length;i++){
+          var n = abiertos[i];
+          var dx = n.cx.baseVal.value - loc.x, dy = n.cy.baseVal.value - loc.y;
+          var d = dx*dx + dy*dy;
+          if(d < dm){ dm = d; mejor = n; }
+        }
+        if(mejor === cerca) return;
+        if(cerca) cerca.classList.remove('is-cerca');
+        cerca = mejor;
+        if(!cerca){ if(tip) tip.classList.remove('on'); return; }
+        cerca.classList.add('is-cerca');
+        if(tip){
+          tip.innerHTML = cerca.dataset.n + ' ' + cerca.dataset.kv + ' kV · <b>' + cerca.dataset.mw + ' MW</b>';
+          var caja = mapa.getBoundingClientRect(), r = cerca.getBoundingClientRect();
+          tip.style.left = (r.left - caja.left + r.width/2) + 'px';
+          tip.style.top  = (r.top  - caja.top) + 'px';
+          tip.classList.add('on');
+        }
+      }
+      mapa.addEventListener('pointermove', function(e){
+        ult = e;
+        if(!pend){ pend = true; requestAnimationFrame(pintar); }
+      });
+      mapa.addEventListener('pointerleave', function(){
+        if(cerca){ cerca.classList.remove('is-cerca'); cerca = null; }
+        if(tip) tip.classList.remove('on');
+      });
+    }
   })();
 </script>
 </body>
